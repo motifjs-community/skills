@@ -12,11 +12,11 @@ function components alike.
 Measured behaviour (`packages/tests/src/components/x-wait-semantics.test.ts`):
 
 - **Lazy build.** If the condition is `true` on first evaluation the element is never `build()`ed —
-  neither it nor its subtree enters the DOM, a placeholder is left instead. `onbuilding`/`onbuilt`/
-  `onmounted` do not fire until it first becomes visible. A panel that starts closed costs nothing.
+  neither it nor its subtree enters the DOM, a placeholder is left instead. `onBuilding`/`onBuilt`/
+  `onMounted` do not fire until it first becomes visible. A panel that starts closed costs nothing.
 - **Instance preserved.** After the first build, toggling only hides/shows. The component is **not**
-  disposed, so scroll position, form input and third-party plugin state survive. `ondisposing`/
-  `ondisposed` do not fire.
+  disposed, so scroll position, form input and third-party plugin state survive. `onDisposing`/
+  `onDisposed` do not fire.
 - **Both are synchronous on first render.** The first content navigated into an empty `Frame`
   lands during `build()`, so `&&`, ternary and a JSX-returning `{this.part()}` are in the DOM when
   `build()` returns — same as the directive. Later branch *changes* are async (the outgoing content

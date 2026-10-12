@@ -119,7 +119,7 @@ const f = reactive({ email: '', agree: false, lang: 'en', note: '' });
 ```tsx
 <input type="text"     x-model={() => f.email} />
 <input type="checkbox" x-model={() => f.agree} />
-<input type="text"     onconfig={(s) => s.bindings.model(f, 'email')} />
+<input type="text"     onConfig={(s) => s.bindings.model(f, 'email')} />
 ```
 `x-model` takes a getter (or a bare member expression, `x-model={f.email}`) and compiles to
 `bindings.model(getter, setter)`. The setter reads the owner again on every write (`f` in `f.email`,
@@ -138,7 +138,7 @@ nothing is written back). Signatures: `model(getter, setter)`, `model(source, me
 writing to that object after a parent replaces it; use `x-model` or the getter/setter form when the
 owner can change. A single object argument is taken as an `IBaseBinding`, and a single function binds
 one-way. For inputs the property choice is re-evaluated on every read/write, not once at bind time —
-when `onconfig` runs, the `type` attribute may not be applied yet.
+when `onConfig` runs, the `type` attribute may not be applied yet.
 `bindings.add('checked', f, 'agree')` binds one-way to an explicit property.
 
 `x-model` on a component whose root is not a form element: the bound value is written to the

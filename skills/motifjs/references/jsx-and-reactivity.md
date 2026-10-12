@@ -182,6 +182,11 @@ application when the root is `<div {...props}/>`). A fragment-rooted component s
 
 String, array, object map or getter: `class={() => ({ active: state.on, big: size > 2 })}`.
 
+In an object written in JSX the key is the class name and the value is its condition: the class is added
+while the value is truthy and removed otherwise. Literals (`true`, `false`, `''`, `0`, `null`) apply once; any
+other value is wrapped in a getter and stays live, inside an array too:
+`class={{ row: true, danger: state.sel === id }}`, `class={['card', { active: () => state.on }]}`.
+
 ### `style`
 
 String, object (`{ width: '33%' }`) or getter returning either. A getter is **live**: keys it stops
@@ -228,7 +233,7 @@ method, the value is written as a plain attribute.
 | `x-wait={() => bool}` | While `true`, the component is held back from the DOM. |
 | `x-display={() => bool}` | Show/hide (uses `hideStrategy`). |
 | `x-style={...}` | Same as `style` (compiles to `sender.style(...)`; getter live). |
-| `x-config`, `x-configured`, `x-building`, `x-built`, `x-mounted`, `x-activated`, `x-deactivated`, `x-disposing`, `x-disposed`, `x-initializing`, `x-initialized`, `x-visibilitychanged` (or `x:config`…, `onconfig`, `onbuilt`, `onmounted`, …) | Lifecycle hooks as props. Several spellings of one hook on the same tag (`onbuilt` + `x-built`, case-insensitive) are merged: all of them run once, in source order. On a function component tag every spelling reaches the returned root; `initializing`/`initialized` fire right after the root is constructed, in the class tag order (`ref` → `initializing` → `initialized` → `config`). |
+| `x-config`, `x-configured`, `x-building`, `x-built`, `x-mounted`, `x-activated`, `x-deactivated`, `x-disposing`, `x-disposed`, `x-initializing`, `x-initialized`, `x-visibilitychanged` (or `x:config`…, `onConfig`, `onBuilt`, `onMounted`, …) | Lifecycle hooks as props. Several spellings of one hook on the same tag (`onBuilt` + `x-built` + `x:built`) are merged: all of them run once, in source order. On a function component tag every spelling reaches the returned root; `initializing`/`initialized` fire right after the root is constructed, in the class tag order (`ref` → `initializing` → `initialized` → `config`). |
 | `key` | Identifies a list item; duplicates raise the `MJX202` dev warning. Rows are matched by the item object, so `key` does not change DOM reuse. |
 | `transition="fade"` or `transition={{...}}` | Enter/leave CSS classes (styling-and-transitions.md). No attribute is written, also on plain DOM tags. |
 | `options={{ hideStrategy, disableDisposal }}` | Copied into the tag's `motif.options` (plain DOM tags and component tags); no attribute is written. |
@@ -239,7 +244,7 @@ getter, with `this` for a method: `x-display={isAuthor}`, `x-wait={this.isLoadin
 
 ## The bindings API (`this.bindings` / `sender.bindings`)
 
-The compiler generates these; you can call them directly in `initializeComponent`/`onconfig` or in tests.
+The compiler generates these; you can call them directly in `initializeComponent`/`onConfig` or in tests.
 
 ```ts
 add(prop, source)                        // bind DOM property `prop` to reactive object/getter

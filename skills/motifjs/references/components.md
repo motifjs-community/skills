@@ -75,7 +75,7 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
 ### Props and children
 
 - Props are whatever JSX attributes you pass: `<UserCard userId={42} highlighted />`.
-- Lifecycle props (`onconfig`, `onbuilt`, `onmounted`, … and their `x-` forms) and `initializeComponent` are removed from
+- Lifecycle props (`onConfig`, `onBuilt`, `onMounted`, … and their `x-` forms) and `initializeComponent` are removed from
   `props` and registered as hooks. A function `ref` (JSX always passes `ref` as a function) is applied to the component and
   removed from `props`; an object `ref` passed without JSX stays as `props.ref` (see Refs). On a component tag, a known DOM event name (`onclick`, `onChange`,
   `oninput:once`) compiles to a listener on the root element (`motif.on`) and never reaches `props`.
@@ -115,9 +115,9 @@ export function Todo(props: { text: string; done?: boolean }) {
 
 - Called once with `props`; the returned JSX becomes the component (wrapped in a fragment when
   multiple roots). Closure variables act as state when they are `reactive()`.
-- Lifecycle hooks are attached as props on the root element: `onconfig`, `onbuilt`, `ondisposing`, …
+- Lifecycle hooks are attached as props on the root element: `onConfig`, `onBuilt`, `onDisposing`, …
   Hooks, `x-wait`/`x-display`, `initializeComponent`, `ref` and `options` written on the function
-  component's tag (`<Panel onmounted={…} />`) are applied to the returned root.
+  component's tag (`<Panel onMounted={…} />`) are applied to the returned root.
 - `transition` on a function component's tag is applied to the returned root as well (a name, an object
   or a getter); the tag wins over a `transition` written on the root inside the function.
   A class component tag applies `transition` itself.
@@ -143,7 +143,7 @@ receives `undefined`.
 | `context` | The `Application` (walks up the parent chain, falls back to `Application.main`), seen through a component-scoped view: `context.on(...)` / `context.onRouterChanged(...)` subscriptions are removed when the component is disposed. Every other member is the application's own: `context.onLifecycle(...)` is **not** removed; register its returned unsubscribe with `this.motif.setDisposable(...)`. |
 | `parent` | Parent component or `null`. |
 | `bindings` | `BindingCollection` (see jsx-and-reactivity.md). |
-| `class.add(...)`, `class.remove(...)`, `class.has(name)` | Ref-counted class management; accepts strings or getters. `class.remove('**')` clears everything. `has` reads the element's `classList`. |
+| `class.add(...)`, `class.remove(...)`, `class.has(name)` | Ref-counted class management; accepts strings, arrays, `{ name: condition }` objects (a function value is a live condition, any other value is read once) or getters. `class.remove('**')` clears everything. `has` reads the element's `classList`. |
 | `attr.add({...})`, `attr.remove(key)`, `attr.has(key)`, `attr.get(key)` | Set attributes; `remove` also stops a reactive attribute getter; `has` reads the element; `get` returns the element's value, else the last value given to `add`, else `null`. |
 | `style(v)` | String, object, or getter → inline style. |
 | `setText(s)` | textContent. |

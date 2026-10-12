@@ -172,7 +172,7 @@
   whose class/text is a getter is the cheapest for mutually exclusive one-liners. Consecutive
   `x-display` siblings under one parent are safe.
 - Directives and lifecycle props written on a **function component** tag (`<InfoBar x-display={...} />`,
-  `onbuilt`, `x-mounted`, `x-initializing` and the other lifecycle spellings, `initializeComponent`, `ref`) are applied to the root the function returns — the function needs no
+  `onBuilt`, `x-mounted`, `x-initializing` and the other lifecycle spellings, `initializeComponent`, `ref`) are applied to the root the function returns — the function needs no
   `runover` prop and must not forward anything. Class components receive them in the constructor.
 - **Short-circuit inside a reactive getter loses dependencies.** `arr.some(...)`, `every`, `a || b` stop
   reading once the answer is known, so the binding never subscribes to the rest. Loop over everything

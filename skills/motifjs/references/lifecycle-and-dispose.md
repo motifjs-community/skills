@@ -6,7 +6,7 @@
 |---|---|---|---|
 | 1 | `onInitializing(sender, e)` | constructor, after the element is assigned and props are applied (`this.props` is set; subclass fields such as `state = reactive(...)` are not initialized yet) | rarely |
 | 2 | `onInitialized` | constructor, right after `onInitializing` | derive config from props |
-| 3 | `onConfig` | **props ready, not in DOM** (subclasses: start of `build()`, after class fields; plain `new Component(tag, { onconfig })`: constructor) | fetch data, set up bindings/watchers |
+| 3 | `onConfig` | **props ready, not in DOM** (subclasses: start of `build()`, after class fields; plain `new Component(tag, { onConfig })`: constructor) | fetch data, set up bindings/watchers |
 | 4 | `onConfigured` | config phase done (start of build) | |
 | 5 | `onBuilding` | DOM construction starts | |
 | 6 | `initializeComponent(sender)` | right before `view()`; the compiler puts the code generated from JSX here | `sender.bindings.*` calls when building without JSX |
@@ -32,9 +32,9 @@ added in code with `this.motif.on('x:built' | 'x:configured' | 'x:disposed' | 'x
 (`The component x:built hook threw.`). `isInitialized` is `false` during `onInitializing` and `true` from
 `onInitialized` on.
 
-Define them as class methods **or** pass as JSX props (`onconfig`, `onbuilt`, `ondisposing`, …
+Define them as class methods **or** pass as JSX props (`onConfig`, `onBuilt`, `onDisposing`, …
 or `x-config`, `x-built`, `x:built`, …). Both run; prop handlers are additive. Several spellings of
-the same hook on one tag (`onbuilt={a} x-built={b}`, case-insensitive) are merged and all run once,
+the same hook on one tag (`onBuilt={a} x-built={b} x:built={c}`) are merged and all run once,
 in source order, on plain DOM tags and component tags alike.
 
 ```tsx

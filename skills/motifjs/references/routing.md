@@ -240,7 +240,8 @@ import { RouterLink } from '@motifx/core';
 `target` is not `_self`, and (in `history` mode) other-origin URLs are left to the browser.
 
 The link is an `<a>` element; pass `el` (a tag name or an existing `Node`) for another element.
-`RouterLink` props: `to`, `el`, `activeClass`, `exactClass`,
+`RouterLink` props: `to` (also written as `href`; in `hash`/`file` mode a `#` is put in front, `#/x`, so a link
+opened in a new tab or copied goes to the right address), `el`, `activeClass`, `exactClass`,
 `onActive/offActive`, `onExact/offExact`, `showHref` (`false` leaves `href` out; a click still
 navigates), `target` (written as an attribute; any value other than `'_self'` leaves the click to the
 browser, no router navigation), `text` (link text when the link has no children; children win).

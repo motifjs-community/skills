@@ -152,8 +152,8 @@ app.run('#app', new AppRoot());  // explicit root component
 - `class X extends Component<HTMLDivElement>` → injects `static elementTag = 'div'`
 
 Attribute names starting with `x-` are normalised: `x-ref` → `ref`, lifecycle names `x-config` /
-`x-built` / `x-mounted` … → `onconfig` / `onbuilt` / `onmounted` … (several spellings of one hook
-on a tag become one ordered list: `onbuilt: [a, b]`), `on:name` / `on-name` / `on_name` →
+`x-built` / `x-mounted` … → `onConfig` / `onBuilt` / `onMounted` … (several spellings of one hook
+on a tag become one ordered list: `onBuilt: [a, b]`), `on:name` / `on-name` / `on_name` →
 `sender.motif.on("name", fn)` with the handler passed as is (only the prefix is stripped), `ref` / `x-ref`
 → one `ref` function (or an ordered list when both are written; the runtime takes it out of the props
 before the component or the function sees them), the code generated for the tag → `initializeComponent`

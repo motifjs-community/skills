@@ -111,12 +111,15 @@ asyncTracking                                                    // used by comp
 `import { debugGetDeps, debugGetDepMap } from '@motifx/core/devtools'` — dependency maps of reactive objects (tests/diagnostics).
 
 Devtools: `app.useDevelopment(true)` turns devtools on together with the dev warnings and the route linter, and
-`useDevelopment(false)` turns them off. Setting `window.__MOTIF_DEVTOOLS__ = true` before `app.useRouter()` also
+`useDevelopment(false)` turns them off. Setting `window.__MOTIF_DEVTOOLS__ = true` before `app.useRouter()` or `app.run()` also
 turns them on, keeps them on after `useDevelopment(false)`, and enables dev warnings (except `MJX301`, which needs
 `useDevelopment(true)`) and the route linter. A URL parameter never turns devtools on. While devtools are on,
 `window.__motifDevBus` is available (`getWarnings()` → collected `{ code, message, details }`; `on(fn)` receives
 `{ type: 'warning', payload }`). With the global flag, Ctrl+\` / Cmd+\` toggles an overlay box at the bottom of the
-page; the box renders no content, so read warnings from the console or `getWarnings()`.
+page; the box renders no content, so read warnings from the console or `getWarnings()`. An external devtools panel
+installs `globalThis.__MOTIF_DEVTOOLS_BUS__ = { publish(type, payload) }`; MotifJS publishes to it only while devtools
+are on (`component:mounted`, `component:disposed`, `route:navigation-start`, `route:navigation-end`, `error:caught`,
+`devtools:warning`).
 
 ## DI
 
@@ -235,7 +238,7 @@ as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method
 `key`, `ref` / `x-ref`, `x-html`, `x-wait`, `x-display`, `x-style`, `initializeComponent` (plain and component tags),
 `transition`, `childs`, `on<event>[:modifier]` (one modifier per attribute), `on:name` / `on-name` / `on_name`
 (handler passed as is to `motif.on(name, fn)`), `on<lifecycle>` / `x-<lifecycle>` / `x:<lifecycle>`
-(`onmounted`, `onactivated`, `ondeactivated`… included; several spellings on one tag all run in source order), `options={{ hideStrategy, disableDisposal }}`,
+(`onMounted`, `onActivated`, `onDeactivated`… included; several spellings on one tag all run in source order), `options={{ hideStrategy, disableDisposal }}`,
 method-like props that call the element method and write no attribute (`focus`, `blur`, `click`, `select`, `scrollIntoView`, `show`/`showModal`/`showPopover` (`true` opens, `false` closes), `close`, `togglePopover`, `requestSubmit`, `checkValidity`, `reportValidity`, `showPicker`, `load`, `setSelectionRange`/`setRangeText`/`setPointerCapture`/`releasePointerCapture`/`fastSeek` (value = argument, array = argument list), …; a getter re-calls on change). `hideStrategy` is given through the `options` prop
 (`options={{ hideStrategy: 'detach' }}`) or set on `motif.options.hideStrategy` in code; a bare
 `hideStrategy="…"` attribute is not special (it becomes a DOM attribute / ordinary prop).

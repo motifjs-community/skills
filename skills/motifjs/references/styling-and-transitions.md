@@ -6,6 +6,7 @@
 <div class="card active" />
 <div class={() => ['card', state.active && 'active']} />
 <div class={() => ({ card: true, active: state.active })} />
+<div class={{ card: true, active: state.active }} />   // key = class, value = live condition
 <div style={{ width: '33%' }} />
 <div style={() => ({ opacity: state.visible ? 1 : 0 })} />
 ```
@@ -15,6 +16,7 @@ Imperative (ref-counted, reactive-aware):
 ```ts
 this.class.add('a', 'b');
 this.class.add(() => state.on ? 'on' : 'off');
+this.class.add({ active: () => state.on });   // a function value is a live condition; any other value is read once
 this.class.remove('a');
 this.class.remove('**');          // remove everything incl. reactive contributors
 // `class` / class.add work on SVG elements too (<svg class="ring">, <path class={() => ...}>).
@@ -73,7 +75,7 @@ const fx = (s: ComponentBase) => {
                                   options: { duration: 300, easing: 'ease-out', fill: 'forwards' } });
   s.motif.options.transition.out({ keyframes: [{ opacity: 1 }, { opacity: 0 }], options: 200 });
 };
-<div onconfig={fx}>Animated</div>
+<div onConfig={fx}>Animated</div>
 ```
 WAAPI keyframes take precedence over CSS class transitions when both exist.
 
