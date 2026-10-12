@@ -110,16 +110,13 @@ asyncTracking                                                    // used by comp
 
 `import { debugGetDeps, debugGetDepMap } from '@motifx/core/devtools'` — dependency maps of reactive objects (tests/diagnostics).
 
-Devtools: `app.useDevelopment(true)` turns devtools on together with the dev warnings and the route linter, and
-`useDevelopment(false)` turns them off. Setting `window.__MOTIF_DEVTOOLS__ = true` before `app.useRouter()` or `app.run()` also
-turns them on, keeps them on after `useDevelopment(false)`, and enables dev warnings (except `MJX301`, which needs
-`useDevelopment(true)`) and the route linter. A URL parameter never turns devtools on. While devtools are on,
-`window.__motifDevBus` is available (`getWarnings()` → collected `{ code, message, details }`; `on(fn)` receives
-`{ type: 'warning', payload }`). With the global flag, Ctrl+\` / Cmd+\` toggles an overlay box at the bottom of the
-page; the box renders no content, so read warnings from the console or `getWarnings()`. An external devtools panel
-installs `globalThis.__MOTIF_DEVTOOLS_BUS__ = { publish(type, payload) }`; MotifJS publishes to it only while devtools
-are on (`component:mounted`, `component:disposed`, `route:navigation-start`, `route:navigation-end`, `error:caught`,
-`devtools:warning`).
+Devtools: `app.useDevelopment(true)` is the only switch. It turns on development mode (dev warnings, the route
+linter) and devtools together; `useDevelopment(false)` turns both off. A URL parameter or a global set by hand never
+turns devtools on. While devtools are on, `globalThis.__MOTIF_DEVTOOLS__` holds
+`{ version: 1, on(fn), getWarnings(), getRoutes(), isEnabled() }`: `getWarnings()` → collected
+`{ code, message, details }`; `on(fn)` receives `{ type, payload }` for `warning`, `component:mounted`,
+`component:disposed`, `route:navigation-start`, `route:navigation-end` and `error:caught`. An external devtools
+panel connects through this object.
 
 ## DI
 
