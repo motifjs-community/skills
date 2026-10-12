@@ -12,6 +12,13 @@ A component is a long-lived object that owns real DOM nodes and has an identity.
 all three forms: a class, a function returning JSX and an Options API object all become the same
 kind of object. The form is a writing choice, not a different model.
 
+The same holds below the component you write. The compiler turns every JSX element (`<div>`, `<h1>`,
+even a text run) into a component object of its own and assembles the tree with `controls.add`; no
+HTML template is produced. A view is therefore a live control tree from the first line: every node
+has `parent`, `controls`, `class`, `attr`, `bindings`, `motif` and a lifecycle, and can be reached and
+changed at run time. When you reason about cost, count components and what each one acquired
+(bindings, events, children, services), not DOM nodes.
+
 `view()` hands the component its template once. From then on the template is in the component's
 hands: the reactive bindings and the list slots are wired, and everything that happens later is
 reactivity writing into existing nodes or `controls` inserting and removing children. There is no

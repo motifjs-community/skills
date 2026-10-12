@@ -11,9 +11,12 @@ metadata:
 # MotifJS
 
 MotifJS is a UI framework for JavaScript and TypeScript (JSX/TSX) for long-lived, state-heavy browser apps.
-There is **no virtual DOM, no diffing, no re-render loop and no SSR**. Components own real DOM
-nodes; the `@motifx/compiler` compiler turns JSX expressions into fine-grained *bindings* that patch only
-the text node / attribute / list slot that depends on the changed reactive field.
+There is **no virtual DOM, no diffing, no re-render loop and no SSR**. The `@motifx/compiler` compiler
+turns **every JSX element into a live component object** (`_mc(tag, setup)`) and builds the tree in code
+with `sender.controls.add(...)`; there are no HTML template strings. Each element has its own `controls`,
+`class`, `attr`, `bindings`, `motif.on` and lifecycle, and every dynamic expression becomes a fine-grained
+*binding* on that component that patches only the text node / attribute / list slot that depends on the
+changed reactive field.
 
 Packages: `@motifx/core` (runtime: components, reactivity, bindings, router, DI, transitions,
 virtualization) and `@motifx/compiler` (JSX compiler exposed as a Vite plugin — also usable in a plain
@@ -43,6 +46,7 @@ one page written both ways.
 | `className`, `onClick`, `htmlFor` | DOM names: `class`, `onclick`, `oninput`, `for`. |
 | `{cond ? <A/> : <B/>}` and `items.map(...)` re-evaluated per render | Compiled to `bindings.ternary` / `bindings.list`: a branch is rebuilt when the value changes, rows follow the item object. Give a stable `key` anyway. |
 | `useEffect` + cleanup | `this.bindings.watch(fn)` (auto-disposed) or `effect(fn)`, whose stop function you register. |
+| A JSX element is a DOM node | Every element is a component instance; its node is `s.element`. Classes, attributes, events and children are calls on it (`s.class.add`, `s.attr.add`, `s.motif.on`, `s.controls.add`), and the same calls work without JSX. Cost and capability are counted per component. |
 | `ref` gives a DOM node | `ref` / `x-ref` give the component instance, exactly once; the node is `s.element`. `ref` is never in `props`. |
 | Context / Redux / Pinia | Built-in DI (`builder.services.addSingleton(...)`, `this.getService(T)`, `inject(T)`) with reactive service state. |
 | `<Link>`, `useNavigate`, `<Outlet>` | `<a rel="router" href="/x">`, `<RouterLink to="/x" el="a">`, `this.context.navigate('/x')`, `<RouterView />` inside the layout. |
