@@ -140,17 +140,16 @@ Every component is a `Disposable`: its constructor calls `trackDisposable`, disp
 create/dispose loop:
 
 ```ts
-import { disposableCore, ComponentBase, IDisposable } from '@motifx/core';
+import { disposableCore, ComponentBase } from '@motifx/core';
 
 let alive = 0;
-const seen = new WeakSet<IDisposable>();
 disposableCore.disposableTracker = {
   trackDisposable(x) { if (x instanceof ComponentBase) alive++; },
-  markAsDisposed(x) { if (!(x instanceof ComponentBase) || seen.has(x)) return; seen.add(x); alive--; },
+  markAsDisposed(x) { if (x instanceof ComponentBase) alive--; },
   setParent() {}, markAsSingleton() {},
 };
 ```
-`markAsDisposed` can arrive more than once per instance during teardown, hence the `WeakSet`.
+`markAsDisposed` arrives once per object; calling `dispose()` again does not report it again.
 Reactive dependency maps are available from `import { debugGetDeps, debugGetDepMap } from '@motifx/core/devtools'`.
 
 ## Wrapping third-party libraries (charts, editors, maps, drag and drop)
