@@ -121,19 +121,23 @@ the shell); paths shift when lists change, which `tree:changed` reports.
 on(fn) => off                         // fn({ type, payload })
 getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, childCount, children? }; type = class name or function name
 getElement(path) / pathOfElement(node)
-inspect(path)                         // props (getters not called), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
-readValue(path, 'props' | 'functionProps', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
+inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
+readValue(path, 'props' | 'functionProps' | 'fields', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
+readStore(id, keys)                   // same, for a store from getStores()
 getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
 getWarnings() / getErrors()           // grouped by code+message / context+name+message, with count, firstAt, lastAt
-getRoute() / getNavigations() / getRoutes() / getServices() / getStores()
+getRoute() / getNavigations() / getRoutes() / getServices()
+getStores()                           // stores still in use: { id, name, type: 'reactive' | 'signal' | 'computed', value, stale?, holders }
+                                      // module stores show when globalThis.__MOTIF_DEV__ = true is set before the app code runs
+                                      // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
 setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)
-writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreValue(index, keys, value)
+writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreValue(id, keys, value)
                                       // writes go through public APIs; result { ok, value? } | { ok: false, error }
 ```
 
 Events: `tree:changed`, `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
-`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn),
+`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`),
 `route:navigation-start`, `route:navigation-end` (`outcome`: `done`, `skipped`, `cancelled`, `notFound`, `error`),
 `warning`, `error:caught`, `ext:<name>:<type>`. There is no mounted event; read `connected` from the tree.
 
