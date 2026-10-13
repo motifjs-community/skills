@@ -124,6 +124,7 @@ getElement(path) / pathOfElement(node)
 inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
 readValue(path, 'props' | 'functionProps' | 'fields', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
 readStore(id, keys)                   // same, for a store from getStores()
+readService(scope, token, keys)       // same, for a service instance listed by getScopes(); never creates a service
 getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
 getWarnings() / getErrors()           // grouped by code+message / context+name+message, with count, firstAt, lastAt
 getRoute() / getNavigations() / getRoutes() / getServices()
