@@ -119,9 +119,10 @@ the shell); paths shift when lists change, which `tree:changed` reports.
 
 ```ts
 on(fn) => off                         // fn({ type, payload })
-getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, childCount, children? }
+getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, childCount, children? }; type = class name or function name
 getElement(path) / pathOfElement(node)
-inspect(path)                         // props (getters not called), bindings, events, hooks, classes, attributes, services, effects, extensions
+inspect(path)                         // props (getters not called), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
+readValue(path, 'props' | 'functionProps', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
 getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
 getWarnings() / getErrors()           // grouped by code+message / context+name+message, with count, firstAt, lastAt
 getRoute() / getNavigations() / getRoutes() / getServices() / getStores()
