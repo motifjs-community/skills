@@ -151,6 +151,8 @@ disposableCore.disposableTracker = {
 ```
 `markAsDisposed` arrives once per object; calling `dispose()` again does not report it again.
 Reactive dependency maps are available from `import { debugGetDeps, debugGetDepMap } from '@motifx/core/devtools'`.
+With `app.useDevelopment(true)`, `__MOTIF_DEVTOOLS__.getCounters().components.notInTree` counts living components
+that are not in the tree; if it does not drop after leaving a page, those components are still held somewhere.
 
 ## Wrapping third-party libraries (charts, editors, maps, drag and drop)
 

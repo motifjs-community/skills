@@ -112,11 +112,37 @@ asyncTracking                                                    // used by comp
 
 Devtools: `app.useDevelopment(true)` is the only switch. It turns on development mode (dev warnings, the route
 linter) and devtools together; `useDevelopment(false)` turns both off. A URL parameter or a global set by hand never
-turns devtools on. While devtools are on, `globalThis.__MOTIF_DEVTOOLS__` holds
-`{ version: 1, on(fn), getWarnings(), getRoutes(), isEnabled() }`: `getWarnings()` → collected
-`{ code, message, details }`; `on(fn)` receives `{ type, payload }` for `warning`, `component:mounted`,
-`component:disposed`, `route:navigation-start`, `route:navigation-end` and `error:caught`. An external devtools
-panel connects through this object.
+turns devtools on. While devtools are on, `globalThis.__MOTIF_DEVTOOLS__` holds the contract object, typed
+`MotifDevtools` from `@motifx/core/devtools` (`version: 1` follows the core major). An external devtools panel
+connects through it. Components have no ids: a path is the list of `controls` indexes from the app shell (`[]` is
+the shell); paths shift when lists change, which `tree:changed` reports.
+
+```ts
+on(fn) => off                         // fn({ type, payload })
+getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, childCount, children? }
+getElement(path) / pathOfElement(node)
+inspect(path)                         // props (getters not called), bindings, events, hooks, classes, attributes, services, effects, extensions
+getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
+getWarnings() / getErrors()           // grouped by code+message / context+name+message, with count, firstAt, lastAt
+getRoute() / getNavigations() / getRoutes() / getServices() / getStores()
+getExtensions() / readExtension(name)
+setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)
+writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreValue(index, keys, value)
+                                      // writes go through public APIs; result { ok, value? } | { ok: false, error }
+```
+
+Events: `tree:changed`, `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
+`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn),
+`route:navigation-start`, `route:navigation-end` (`outcome`: `done`, `skipped`, `cancelled`, `notFound`, `error`),
+`warning`, `error:caught`, `ext:<name>:<type>`. There is no mounted event; read `connected` from the tree.
+
+`notInTree` counts living components that are not in the tree; when it does not drop after leaving a page, those
+components are still held somewhere.
+
+A package exposes its own state with
+`registerDevtools(name, { describe?, inspect?(component) })` from `@motifx/core/devtools`; it returns
+`{ emit(type, payload), pathOf(component), dispose() }`. Registration is free while devtools are off; `describe` and
+`inspect` run only when the panel asks.
 
 ## DI
 

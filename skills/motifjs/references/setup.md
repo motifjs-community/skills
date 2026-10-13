@@ -4,7 +4,7 @@
 
 | Package | Role |
 |---|---|
-| `@motifx/core` | Runtime. ESM + CJS + UMD builds, bundled types at `dist/index.d.ts` (`dist/index.d.cts` for `require`). Exposes `./devtools` (`debugGetDeps`, `debugGetDepMap`), `./jsx-runtime` and `./jsx-dev-runtime` (types only; JSX is compiled by @motifx/compiler). |
+| `@motifx/core` | Runtime. ESM + CJS + UMD builds, bundled types at `dist/index.d.ts` (`dist/index.d.cts` for `require`). Exposes `./devtools` (`debugGetDeps`, `debugGetDepMap`, `registerDevtools`, the `MotifDevtools` type), `./jsx-runtime` and `./jsx-dev-runtime` (types only; JSX is compiled by @motifx/compiler). |
 | `@motifx/compiler` | Compiler plugin + `motif-lint` / `motif-explain` CLIs. Default export: the Vite plugin function (`compiler()`). Named exports: `Compiler`, `explain`, `printDiagnostics`, `printExplanations`, `formatExplanations`, `lintProject`, `lintProgram`, and the types `MotifVitePluginOptions`, `MotifDiagnostic`, `MotifExplanation`, `ExplainSite`, `ExplainReactivity`, `LintOptions` (see below). It depends on its own TypeScript (`>=5 <7`) for the type-aware lint, so it works whatever TypeScript version the project uses. |
 
 Programmatic API of `@motifx/compiler`:
