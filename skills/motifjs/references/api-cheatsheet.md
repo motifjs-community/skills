@@ -127,7 +127,7 @@ readStore(id, keys)                   // same, for a store from getStores()
 getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
 getWarnings() / getErrors()           // grouped by code+message / context+name+message, with count, firstAt, lastAt
 getRoute() / getNavigations() / getRoutes() / getServices()
-getStores()                           // stores still in use: { id, name, type: 'reactive' | 'signal' | 'computed', value, stale?, holders }
+getStores()                           // stores still in use: { id, name, type: 'reactive' | 'signal' | 'computed', value, stale?, released?, holders }
                                       // module stores show when globalThis.__MOTIF_DEV__ = true is set before the app code runs
                                       // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
@@ -137,7 +137,7 @@ writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreV
 ```
 
 Events: `tree:changed`, `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
-`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`),
+`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`), `stores:changed` (new stores recorded, once per turn),
 `route:navigation-start`, `route:navigation-end` (`outcome`: `done`, `skipped`, `cancelled`, `notFound`, `error`),
 `warning`, `error:caught`, `ext:<name>:<type>`. There is no mounted event; read `connected` from the tree.
 
