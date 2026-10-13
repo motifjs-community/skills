@@ -131,8 +131,9 @@ getWarnings() / getErrors()           // grouped by code+message / context+name+
 getRoute() / getNavigations() / getRoutes() / getServices()
 getScopes()                           // DI scopes: { id, kind: 'root' | 'navigation' | 'user', name, parent, current, pending, pins, services: [{ token, lifetime, instance, creating? }], transients }
                                       // pins: components outside the current page still keeping the scope (keepAlive)
-getStores()                           // stores still in use: { id, name, type: 'reactive' | 'signal' | 'computed', value, stale?, released?, holders }
-                                      // module stores show when globalThis.__MOTIF_DEV__ = true is set before the app code runs
+getStores()                           // stores still in use: { id, name, file?, type: 'reactive' | 'signal' | 'computed', value, stale?, released?, holders }
+                                      // top-level module stores are named by the compiler while developing (name = variable, file = path);
+                                      // other early stores show when globalThis.__MOTIF_DEV__ = true is set before the app code runs
                                       // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
 setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)

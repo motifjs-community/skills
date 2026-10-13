@@ -11,7 +11,7 @@ Programmatic API of `@motifx/compiler`:
 
 | Export | Shape |
 |---|---|
-| `new Compiler()` | `start(code, filename)` / `motifCompile(code, filename)` (same call) → Babel result or `null`; afterwards `compiler.diagnostics: MotifDiagnostic[]`. `explain(code, filename)` also fills `compiler.explanations`. `lowerDecorators(code, filename)` lowers only decorators |
+| `new Compiler()` | `start(code, filename)` / `motifCompile(code, filename)` (same call) → Babel result or `null`; afterwards `compiler.diagnostics: MotifDiagnostic[]`. `explain(code, filename)` also fills `compiler.explanations`. `lowerDecorators(code, filename)` lowers only decorators. Setting `compiler.storeNames = 'src/file.ts'` names top-level stores in all of these; `nameStores(code, filename)` does only that (→ `null` when there is nothing to name) |
 | `MotifDiagnostic` | `{ code, message, file, line: number \| null, frame? }` |
 | `MotifExplanation` | `{ file, line, column, site: ExplainSite, shape, source, lowered, reactive: ExplainReactivity, deps, note? }` |
 | `ExplainSite` | `'child' \| 'element' \| 'attr' \| 'prop' \| 'event' \| 'directive' \| 'component-event' \| 'key'` |
@@ -48,7 +48,9 @@ single file must compile with another JSX runtime).
 compiler({
   diagnostics: false,        // silence the MJX001–MJX004, MJX007 and MJX015 compile-time warnings (default: on)
   explain: 'pages/Home',     // print "what did this expression compile to" for matching files
-})                           //   true = every file; string = path includes; RegExp = test(id)
+                             //   true = every file; string = path includes; RegExp = test(id)
+  storeNames: true,          // name top-level module stores for DevTools (default: on in vite dev, off in production builds)
+})
 ```
 
 ## CLI tools (shipped with `@motifx/compiler`, in `node_modules/.bin`)
