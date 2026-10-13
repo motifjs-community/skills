@@ -123,6 +123,7 @@ getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, wait
 getElement(path) / pathOfElement(node)
 inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
 readValue(path, 'props' | 'functionProps' | 'fields', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
+                                      // a signal or computed previews as { kind: 'signal', type, value, stale? }; paths continue into its value
 readStore(id, keys)                   // same, for a store from getStores()
 readService(scope, token, keys)       // same, for a service instance listed by getScopes(); never creates a service
 getCounters()                         // components { live, inTree, notInTree, byType }, bindings, listeners, effects, reactivity
