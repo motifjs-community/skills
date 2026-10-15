@@ -1,6 +1,6 @@
 ---
 name: motifjs
-description: "Build, change or debug MotifJS apps (@motifx/core, @motifx/compiler). Use when code imports @motifx/core or the user mentions MotifJS. MotifJS is not React: read this before writing its code."
+description: "Build, change or debug MotifJS apps (@motifx/core, @motifx/compiler), in JSX or in plain TS/JS with motifComponent. Use when code imports @motifx/core or the user mentions MotifJS. MotifJS is not React: read this before writing its code."
 license: MIT
 metadata:
   author: MotifJS
@@ -34,7 +34,7 @@ one page written both ways.
 4. **Identity drives the data model.** One reactive object per entity for the life of the screen: fill it in place when data arrives, `push`/`splice` lists. Replacing an object or array is a deliberate "rebuild everything bound to it".
 5. **Rebuild or fill in place is a design decision per page.** The same thing changing state (data arriving, a page number, a sign-in) is filled in place behind `x-display`/`x-wait`; a different thing, or a tree whose shape depends on the data or on route params, is rebuilt. Both are correct in their place.
 6. **Boundaries follow state, reuse and rows,** not size. Split out a part when it has its own state and lifetime, when it is reused, or when it is a list row; never down to a `<div>`. Three or three thousand lines are both fine. Pages and model-bound views are classes, small parts are functions, the Options API carries object-based code.
-7. **`controls.add` inserts content that has no state to bind to.** Everything bound to a model is written in JSX.
+7. **`controls.add` inserts content that has no state to bind to.** Everything bound to a model is written in JSX. In a project without JSX the whole view is the same calls written by hand, `motifComponent(tag, (c) => { c.class.add(…); c.bindings.text(…); c.controls.add(…); })`; `references/imperative.md` gives the shapes and the `.ts`-only pitfalls.
 8. **Lifetime is yours.** Resources you open are registered with `this.motif.setDisposable`; work that finishes after an `await` goes through `this.using` / `this.doWork` or a scoped model, not a hand-written `isDisposed` check after every `await`.
 
 ## Habits to unlearn
@@ -137,6 +137,7 @@ export const MessageBox = () => ({
 | Design: component as object, model/view split, communication by scope, identity, rebuild vs fill, one page written both ways | `references/thinking-in-motif.md` |
 | Build setup, file extensions, opt-out markers, tsconfig | `references/setup.md` |
 | Component anatomy: constructor forms, props/childs, controls, refs, context, elementTag | `references/components.md` |
+| Views without JSX: `motifComponent` call shapes, text nodes, `preconfig`, fragments for branches and lists, class pages in `.ts`, reading compiled output | `references/imperative.md` |
 | JSX expression forms, attributes, `x-*` props, reactive primitives, bindings API | `references/jsx-and-reactivity.md` |
 | `x-wait`/`x-display`, `&&`, ternary, `.map`, `switch`, `Frame`, `Lazy`, `Transport` slots | `references/conditionals-lists-frames.md` |
 | DOM/component/app events, forms, two-way binding | `references/events-and-forms.md` |

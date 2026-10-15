@@ -8,7 +8,7 @@ Each skill follows the open [Agent Skills](https://agentskills.io) format: a `SK
 
 | Skill | What it covers |
 |---|---|
-| [`motifjs`](skills/motifjs/SKILL.md) | Components, reactivity, JSX bindings, conditionals and lists, events and forms, lifecycle and disposal, router, dependency injection, styling and transitions, virtualization, testing, mobile and Electron, error codes. |
+| [`motifjs`](skills/motifjs/SKILL.md) | Components, reactivity, JSX bindings, views without JSX (`motifComponent`), conditionals and lists, events and forms, lifecycle and disposal, router, dependency injection, styling and transitions, virtualization, testing, mobile and Electron, error codes. |
 
 ## Install
 
