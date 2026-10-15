@@ -323,12 +323,14 @@ work in `hash`/`file` mode too; `app.navigate` forwards its options to the route
 
 **Cancelled back/forward restores the address.** The browser changes the URL before the router runs.
 When a guard, `onLeave` or middleware cancels a back/forward navigation the router moves the history
-back to the entry of the page still on screen (`history.go`), so URL and view never diverge. It keeps
+back to the entry of the page still on screen (`history.go`), so URL and view never diverge. The same
+holds for an address typed into the address bar (or a plain anchor link) that is cancelled. It keeps
 an index in `history.state.__motifHistory`; code that calls `history.pushState` directly can skew it.
 
 **Direction and entry state.** Every navigation carries `direction`
 (`'initial' | 'push' | 'replace' | 'back' | 'forward' | 'traverse'`) in guards (`to.direction`),
-`onRouterChanged` and `app.router.direction`. `navigate(uri, { state })` stores `state` on that history
+`onRouterChanged` and `app.router.direction`. `'push'` is any new history entry: a router navigation,
+an address typed into the address bar, or a plain anchor link. `navigate(uri, { state })` stores `state` on that history
 entry; it is returned as `app.router.state` / `to.state` / event `state` again when the user comes back
 with back/forward or reloads. Plain objects keep their fields (the router only adds its own key and
 strips it on read); non-plain values (`Date`, `Map`) are stored untouched.

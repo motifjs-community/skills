@@ -1,6 +1,6 @@
 ---
 name: motifjs
-description: Build, modify, or debug applications written with MotifJS (npm packages `@motifx/core` + `@motifx/compiler`). Use whenever a project imports from "@motifx/core", uses the @motifx/compiler Vite plugin, or the user mentions MotifJS, Component/view(), reactive(), bindings, RouterView, Application.CreateBuilder() or Virtualization. MotifJS is NOT React, Vue, Solid or Angular; no model has prior knowledge of it, so read this skill before writing any MotifJS code.
+description: "Build, change or debug MotifJS apps (@motifx/core, @motifx/compiler). Use when code imports @motifx/core or the user mentions MotifJS. MotifJS is not React: read this before writing its code."
 license: MIT
 metadata:
   author: MotifJS

@@ -12,22 +12,67 @@ Each skill follows the open [Agent Skills](https://agentskills.io) format: a `SK
 
 ## Install
 
-**Claude Code**
+### Claude Code (terminal, VS Code, desktop app)
+
+Inside a session:
 
 ```
 /plugin marketplace add motifjsdev/skills
 /plugin install motifjs@motifjs
 ```
 
-**Any Agent Skills compatible tool** (Codex CLI, Gemini CLI, GitHub Copilot, Cursor, ...)
+The second command opens the plugin details, where you choose whether it is installed for you, for the project or for this machine only. From a shell, `claude plugin marketplace add motifjsdev/skills` and `claude plugin install motifjs@motifjs` install it directly. In VS Code, type `/plugins`, add `motifjsdev/skills` on the Marketplaces tab and install `motifjs` on the Plugins tab. In the desktop app, use `+` → Plugins → Add plugin.
+
+**For everyone working on a repository**, commit this to the repository's `.claude/settings.json`; the skill then loads for each person who trusts the folder:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "motifjs": { "source": { "source": "github", "repo": "motifjsdev/skills" } }
+  },
+  "enabledPlugins": { "motifjs@motifjs": true }
+}
+```
+
+**Without the plugin system**, copy `skills/motifjs` to `~/.claude/skills/motifjs` (all your projects) or to `.claude/skills/motifjs` in one project.
+
+### Claude apps (claude.ai)
+
+1. Zip the `skills/motifjs` folder so that the archive contains `motifjs/SKILL.md` and `motifjs/references/`.
+2. In Claude, open Customize → Skills, choose `+` → Create skill → Upload a skill, and select the zip.
+3. Turn the skill on. Code execution must be enabled in your settings.
+
+On Team and Enterprise plans, an owner can add the skill for the whole organization under Organization settings → Plugins & skills.
+
+### Claude API
+
+Upload the folder once and reference it from your requests:
+
+```python
+from anthropic import Anthropic
+from anthropic.lib import files_from_dir
+
+client = Anthropic()
+skill = client.skills.create(files=files_from_dir("skills/motifjs"))
+
+client.messages.create(
+    model="claude-opus-5-5",
+    max_tokens=4096,
+    container={"skills": [{"type": "custom", "skill_id": skill.id, "version": "latest"}]},
+    tools=[{"type": "code_execution_20250825", "name": "code_execution"}],
+    messages=[{"role": "user", "content": "Add a settings page to my MotifJS app."}],
+)
+```
+
+### Other agents (Codex CLI, Gemini CLI, GitHub Copilot, Cursor, ...)
 
 ```
 npx skills add motifjsdev/skills
 ```
 
-**Manual**
+Or copy `skills/motifjs` into the agent's skills directory; see [agentskills.io](https://agentskills.io) for the directory each tool reads.
 
-Copy `skills/motifjs` into your agent's skills directory, for example `.claude/skills/motifjs` in a Claude Code project. See [agentskills.io](https://agentskills.io) for the directory each tool reads.
+Installs do not carry over between Claude Code, the Claude apps and the API; add the skill to each one you use.
 
 ## Layout
 

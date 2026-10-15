@@ -36,11 +36,37 @@ export default defineConfig({
 ```
 
 Rollup: pass the same `compiler()` to a plain Rollup build; there is no separate Rollup or Babel plugin.
+Rollup has no mode of its own, so tell it about production builds: `compiler({ production: !process.env.ROLLUP_WATCH })`.
+
+On Vite with Rolldown (Vite 8) the plugin also sets `optimizeDeps.rolldownOptions.transform.jsx` to `'preserve'` unless the app sets it, so the dependency scan reads `.jsx` files without looking for another JSX runtime.
 
 ### Per-file opt-out
 
 A file containing the comment `//useReact` or `//useVue` is skipped by the plugin (useful when a
 single file must compile with another JSX runtime).
+
+### Development-only code
+
+A production build removes code marked for development only, in app files and in packages under
+`node_modules`. MotifJS marks its DevTools hooks this way, so they never reach a production bundle,
+whatever `app.useDevelopment()` says.
+
+```ts
+/* @DEV-ONLY */ console.log('built', this);    // removes the one statement that follows
+
+/* @DEV-ONLY-BEGIN */
+const probe = createProbe(app);                  // removes everything up to END, markers included
+probe.attach();
+/* @DEV-ONLY-END */
+```
+
+- A marker is a block comment holding only the marker; a `//` line that mentions it is not a marker.
+- `@DEV-ONLY` works at any depth (inside methods, before `if`, before `const`).
+- `BEGIN` and `END` stand in the same block, between statements, imports or class members. A
+  `BEGIN` without `END`, an `END` without `BEGIN`, a nested `BEGIN` or a range marker inside an
+  expression stops the build with an error at the marker, in `vite dev` as well.
+- Production means `vite build` in Vite; in Rollup the `production` option or `NODE_ENV=production`.
+  Nothing is removed while developing.
 
 ### Plugin options
 
@@ -50,6 +76,7 @@ compiler({
   explain: 'pages/Home',     // print "what did this expression compile to" for matching files
                              //   true = every file; string = path includes; RegExp = test(id)
   storeNames: true,          // name top-level module stores for DevTools (default: on in vite dev, off in production builds)
+  production: true,          // remove development-only code (default: vite build in Vite, NODE_ENV=production elsewhere)
 })
 ```
 
