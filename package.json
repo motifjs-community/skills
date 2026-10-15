@@ -1,0 +1,21 @@
+{
+  "name": "@motifx-community/skills",
+  "version": "1.2.0-rc.7",
+  "description": "Agent Skills that teach AI coding agents to build, modify and debug MotifJS applications (@motifx/core + @motifx/compiler).",
+  "keywords": ["motifjs", "motifx", "agent-skills", "claude", "skills", "ai"],
+  "homepage": "https://motifjs.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/motifjs-community/skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/motifjs-community/skills/issues"
+  },
+  "license": "MIT",
+  "author": "Ekrem Erşahin",
+  "files": ["skills", ".claude-plugin"],
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
+  }
+}

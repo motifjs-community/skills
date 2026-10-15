@@ -17,20 +17,20 @@ Each skill follows the open [Agent Skills](https://agentskills.io) format: a `SK
 Inside a session:
 
 ```
-/plugin marketplace add motifjsdev/skills
-/plugin install motifjs@motifjs
+/plugin marketplace add motifjs-community/skills
+/plugin install motifjs@motifjs-community
 ```
 
-The second command opens the plugin details, where you choose whether it is installed for you, for the project or for this machine only. From a shell, `claude plugin marketplace add motifjsdev/skills` and `claude plugin install motifjs@motifjs` install it directly. In VS Code, type `/plugins`, add `motifjsdev/skills` on the Marketplaces tab and install `motifjs` on the Plugins tab. In the desktop app, use `+` → Plugins → Add plugin.
+The second command opens the plugin details, where you choose whether it is installed for you, for the project or for this machine only. From a shell, `claude plugin marketplace add motifjs-community/skills` and `claude plugin install motifjs@motifjs-community` install it directly. In VS Code, type `/plugins`, add `motifjs-community/skills` on the Marketplaces tab and install `motifjs` on the Plugins tab. In the desktop app, use `+` → Plugins → Add plugin.
 
 **For everyone working on a repository**, commit this to the repository's `.claude/settings.json`; the skill then loads for each person who trusts the folder:
 
 ```json
 {
   "extraKnownMarketplaces": {
-    "motifjs": { "source": { "source": "github", "repo": "motifjsdev/skills" } }
+    "motifjs-community": { "source": { "source": "github", "repo": "motifjs-community/skills" } }
   },
-  "enabledPlugins": { "motifjs@motifjs": true }
+  "enabledPlugins": { "motifjs@motifjs-community": true }
 }
 ```
 
@@ -64,10 +64,18 @@ client.messages.create(
 )
 ```
 
+### npm
+
+```
+npm install --save-dev @motifx-community/skills
+```
+
+The skill is then in `node_modules/@motifx-community/skills/skills/motifjs`. Its version follows `@motifx/core`, so install the same version as the framework in your project.
+
 ### Other agents (Codex CLI, Gemini CLI, GitHub Copilot, Cursor, ...)
 
 ```
-npx skills add motifjsdev/skills
+npx skills add motifjs-community/skills
 ```
 
 Or copy `skills/motifjs` into the agent's skills directory; see [agentskills.io](https://agentskills.io) for the directory each tool reads.
@@ -78,6 +86,7 @@ Installs do not carry over between Claude Code, the Claude apps and the API; add
 
 ```
 .claude-plugin/marketplace.json   Claude Code marketplace manifest
+package.json                      npm package @motifx-community/skills
 skills/motifjs/SKILL.md           entry point: mental model, rules, reference map
 skills/motifjs/references/*.md    detailed references loaded on demand
 ```
