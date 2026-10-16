@@ -155,6 +155,9 @@ In JSX write a `switch` inside a block-bodied getter; the compiler turns the `ca
 `case` labels must be string, number or boolean **literals** (other cases are skipped). Each `case`
 contributes only the argument of its own `return`; a branch without `return` places empty content, so
 fall-through (`case 'a': case 'b': return <X/>;`) leaves `'a'` empty — repeat the `return` per case.
+A branch returning `null` or `undefined` (`default: return null`, `return ok ? <X/> : null`) empties
+the slot too. In a hand-written `switchCase`, `frame.navigate(null)` places nothing and leaves the
+previous content; empty the slot with `frame.flush()`.
 Statements before the `switch` in the block body, and statements before a `return` inside a case, are
 dropped.
 

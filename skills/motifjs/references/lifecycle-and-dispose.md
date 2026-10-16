@@ -105,7 +105,7 @@ onConfig() {
   const id = setInterval(() => this.tick(), 1000);
   this.motif.setDisposable(() => clearInterval(id));
 
-  this.motif.setDisposable(this.context.onLifecycle((e) => { if (e?.state === 'resumed') this.refresh(); }));
+  this.motif.setDisposable(this.context.onLifecycle(({ state }) => { if (state === 'resumed') this.refresh(); }));
 
   const stop = effect(() => console.log(store.x));
   this.motif.setDisposable(stop);

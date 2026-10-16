@@ -46,8 +46,8 @@ it is detached, not disposed, and receives `onDeactivated` / `onActivated` (rout
 ## App lifecycle (`app.onLifecycle`)
 
 ```ts
-const off = app.onLifecycle((e) => {
-  if (e?.state === 'resumed' || e?.state === 'online') store.refresh();
+const off = app.onLifecycle(({ state }) => {
+  if (state === 'resumed' || state === 'online') store.refresh();
 });
 ```
 

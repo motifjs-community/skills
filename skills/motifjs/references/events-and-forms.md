@@ -22,7 +22,8 @@
 - Handler arity decides the signature: 1 param → `(event)`, 2 params → `(sender, event)` where
   `sender` is the `ComponentBase` (`sender.element`, `sender.context`, `sender.props`).
 - Under `strict` both forms are typed from the element's event on plain and component tags
-  (`onkeydown={(e) => e.key}` → `KeyboardEvent`); no annotation is needed. The first parameter is typed
+  (`onkeydown={(e) => e.key}` → `KeyboardEvent`); no annotation is needed. Modifier props take the
+  same type as the unmodified event (`onkeydown:once={(e) => e.key}`). The first parameter is typed
   `Event & ComponentBase` because its meaning depends on arity: use event members in `(e) => …`,
   component members in `(s, e) => …`.
 - Returning `{ cancel: true }` → `preventDefault()` + `stopPropagation()`. Every other return value,
@@ -40,6 +41,8 @@ This spelling binds the handler as is to the tag's component: `<X on:save={fn}/>
 `sender.motif.on('save', fn)`. Only the prefix is stripped: `on-my-event` → `my-event`,
 `on_my_event` → `my_event`. It works for DOM events and for custom events fired with
 `motif.trigger`, with the same arity rule (1 param → `fn(event)`, 2+ → `fn(sender, event)`).
+The name is free-form, so the parameters are typed `any`; give the data its type in the parameter
+(`on:saved={(saved: Note) => …}`).
 
 ```tsx
 <Editor on:save={(e) => console.log(e.id)} />      // Editor: this.motif.trigger('save', { id: 7 })
@@ -142,17 +145,24 @@ when `onConfig` runs, the `type` attribute may not be applied yet.
 `bindings.add('checked', f, 'agree')` binds one-way to an explicit property.
 
 `x-model` on a component whose root is not a form element: the bound value is written to the
-component's `value` property (define `set value(v)`), and the component writes back with
+component's `value` property (`set value(v)` / `get value()` in a class or an options object,
+`Object.defineProperty(root, 'value', …)` in a function component's `initializeComponent`). When the
+component defines `value`, it wins over the element's own `value` (a `<button>` root keeps no `value`
+attribute). The component writes back with
 `this.bindings.writeModel(v)`. It writes through every `model`/`x-model` binding on the component
 (same path as form elements, `converterBack` applied) and returns `false` when there is none, so the
 component also works without `x-model`. Do not search `bindings.items` for the setter.
 
 ```tsx
-class Toggle extends Component<HTMLDivElement> {
+class Toggle extends Component<HTMLButtonElement> {
   state = reactive({ on: false });
   set value(v: boolean) { this.state.on = !!v; }
   get value() { return this.state.on; }
-  view() { return <button onclick={() => this.bindings.writeModel(!this.state.on)}>toggle</button>; }
+  onConfigured() {
+    this.attr.add({ type: 'button' });
+    this.motif.on('click', () => this.bindings.writeModel(!this.state.on));
+  }
+  view() { return <>{() => (this.state.on ? 'on' : 'off')}</>; }
 }
 <Toggle x-model={() => settings.dark} />
 ```

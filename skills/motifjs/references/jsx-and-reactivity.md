@@ -12,7 +12,7 @@ import { reactive, useModel, createSignal, createComputed, effect, untracked, de
 | `createSignal(v)` / `new Signal(v, equals?)` / `Signal.create(v, equals?)` | `.value` get/set, `.peek()`, `.update(fn)`, `.mutate(fn)`, `.notify()`, `.asReadonly()`, `.dispose()`. |
 | `createComputed(fn)` | Eager, cached derived value: computed at creation and recomputed on dependency change even when unread; `.value`, `.peek()`, `.dispose()`. |
 | `createLazyComputed(fn)` | Lazy derived value: nothing is computed until `.value` is read; a dependency change only marks it dirty (synchronously) and wakes its readers; `.value`, `.peek()`, `.isDirty`, `.dispose()`. |
-| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking. Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
+| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking; `value` is typed from `fn`'s return type. Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
 | `untracked(fn)` | Reads inside are not tracked by the enclosing effect; returns `fn`'s value. Nested `effect()` calls still track normally. |
 | `deepClone(v)`, `clearModel(m)` | Utilities. |
 | `asyncTracking` | `capture()`/`suspend()`/`resume()`/`end()`; emitted by the compiler around `await` in a `Virtualization` `dataRequest` so reads after `await` stay tracked. Not needed in app code. |
