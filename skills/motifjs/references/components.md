@@ -1,7 +1,9 @@
 # Components
 
 Every component derives from `ComponentBase<TElement, TProps>`; you use the concrete `Component`.
-A component = one root DOM node (`element`) + a live child collection (`controls`) + bindings.
+A component = one `element` (the declared or given DOM element; a comment marker when the class declares
+none, and a wrapper returned from `view()` is then a child, not the element) + a live child collection
+(`controls`) + bindings.
 
 ## Class component (pages and views bound to a model)
 

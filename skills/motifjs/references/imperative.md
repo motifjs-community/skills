@@ -79,8 +79,10 @@ export function text(value: string): ComponentBase {
 element to act on, and a CSS grid sees the children, not the page. Two correct shapes:
 
 ```ts
-// 1. A fragment root whose view() returns the real root (the starter's choice): the element view()
-//    returns is the component's element in the DOM; everything is configured on that element.
+// 1. No element declared (the starter's choice): the component is a fragment and view() returns its
+//    content. The main below is the first child, not the component's element: this.element is a comment
+//    marker; this.class / this.attr / this.motif.on and the tag's class / id / onclick reach nothing
+//    (silently); x-display and motif.hide() hide the children. Configure main itself.
 export default class SettingsPage extends Component {
   settings = this.getService(SettingsService)!;
 
@@ -156,7 +158,8 @@ it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `F
 ## Pitfalls of hand-written views
 
 1. **A fragment by accident.** `Component<HTMLDivElement>` in a `.ts` file is a fragment (above); write
-   `static elementTag`, call `super('div')`, or return the root from `view()`.
+   `static elementTag` or call `super('div')`. Returning a wrapper from `view()` does not give the
+   component an element: it stays a fragment and the wrapper is its first child.
 2. **Errors inside `initializeComponent` are swallowed** (`MJX122`, SKILL.md rule 14): the element
    renders empty and `console.error` is the only sign. Typical cause: a `const` that shadows a helper used
    in its own setup (`const text = motifComponent('p', (p) => p.controls.add(text('…')))` calls the
