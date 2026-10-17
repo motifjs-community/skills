@@ -197,9 +197,13 @@ export class ArticlePage extends Component<HTMLDivElement> {
     this.state.comments.splice(this.state.comments.indexOf(comment), 1);
   }
 
+  override onConfigured() {
+    this.class.add('article-page');
+  }
+
   override view() {
     return (
-      <div class="article-page">
+      <>
         {this.state.phase === 'loading' ? (
           <p>Loading article...</p>
         ) : this.state.phase === 'error' ? (
@@ -213,7 +217,7 @@ export class ArticlePage extends Component<HTMLDivElement> {
             onRemoveComment={(c: Comment) => void this.removeComment(c)}
           />
         )}
-      </div>
+      </>
     );
   }
 }
@@ -330,11 +334,15 @@ export class ArticlePage extends Component<HTMLDivElement> {
     void this.model.load(String(useNavigation().params.slug ?? ''));
   }
 
+  override onConfigured() {
+    this.class.add('article-page');
+  }
+
   override view() {
     const s = this.model.state;
     const article = s.article;
     return (
-      <div class="article-page">
+      <>
         <p x-display={() => s.phase === 'loading'}>Loading article...</p>
         <p x-display={() => s.phase === 'error'}>This article could not be loaded.</p>
         <div x-display={() => s.phase === 'ready'}>
@@ -349,7 +357,7 @@ export class ArticlePage extends Component<HTMLDivElement> {
             <CommentCard key={c.id} comment={c} />
           ))}
         </div>
-      </div>
+      </>
     );
   }
 }

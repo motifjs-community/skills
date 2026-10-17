@@ -168,7 +168,7 @@ import { Frame } from '@motifx/core';
 
 class Shell extends Component<HTMLDivElement> {
   frame = new Frame();
-  view() { return <div><nav/>{this.frame}</div>; }
+  view() { return <><nav/>{this.frame}</>; }
   async showSettings() { await this.frame.navigate(<Settings />); }   // disposes previous content
   async showLazy() { await this.frame.navigateLazy(() => import('./Reports'), { Loaderview: new Spinner() }); }
 }

@@ -167,7 +167,7 @@ A spread never sets `innerHTML` or `srcdoc` (dev warning `MJX124`) and never wri
 trusted HTML and write an intended `javascript:` link inline on the tag; inline attributes are not filtered.
 
 On a **component tag** (`<Card {...props}/>`, `<Card class="x" id="y"/>`) only the **common attributes**
-fall through to the component's root element (attribute fallthrough): `class`/`className` (merged
+fall through to the component's own element (attribute fallthrough): `class`/`className` (merged
 with the component's own classes), `style`, `id`, `tabindex`, `role`, `aria-*`, `data-*`. Getters
 stay live. Data/callback props (`items`, `label`, `onSave`, `disabled`) are never written to the root, and
 neither is `title` — deliberately, since it is a very common data prop name (`<Card title="…"/>`).
@@ -176,7 +176,9 @@ keys and DOM event props on every component tag (even with a custom constructor 
 component declares under the same name keeps its own type. The component's own
 `onConfigured`/`initializeComponent` attributes win for the same attribute (fallthrough is applied in the constructor).
 Function components behave the same: the tag's common attributes land on the returned root (no double
-application when the root is `<div {...props}/>`). A fragment-rooted component silently ignores them.
+application when the root is `<div {...props}/>`). A component without an element (a fragment: a class that
+declares none, an Options object with `el: undefined`/`null`) silently ignores them, and DOM event props on
+its tag never fire.
 
 ### `class` / `className`
 

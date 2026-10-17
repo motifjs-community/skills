@@ -175,7 +175,7 @@ that are not in the tree; if it does not drop after leaving a page, those compon
 If the library moves DOM nodes owned by a list binding (drag and drop), undo its DOM change, apply the
 same change to the model and let the list binding redraw. Do not use `options` as a data prop name
 (it is read as component options); use `chartOptions`, `sortableOptions`… A wrapper shipped as its own
-package can declare its root without JSX (`static elementTag = 'canvas'`); with no `view()`, JSX
-children are appended to the root. Keep one copy of `@motifx/core` and of the wrapped library in the app
+package can declare its own element without JSX (`static elementTag = 'canvas'`); with no `view()`, JSX
+children are appended to that element. Keep one copy of `@motifx/core` and of the wrapped library in the app
 (`resolve: { dedupe: ['@motifx/core', 'chart.js'] }` in Vite): two copies split registries and reactivity
 engines silently.

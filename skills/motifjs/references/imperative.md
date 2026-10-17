@@ -100,9 +100,9 @@ export default class SettingsPage extends Component {
 // 2. A declared element, written by hand; view() then returns the children.
 export class Panel extends Component<HTMLDivElement> {
   static elementTag = 'div';            // or constructor() { super('div'); }
+  override onConfigured() { this.class.add('panel'); }
   override view() {
-    this.class.add('panel');
-    return [heading(), body()];
+    return motifFragment({ initializeComponent: (f: ComponentBase) => f.controls.add(heading(), body()) });
   }
 }
 ```

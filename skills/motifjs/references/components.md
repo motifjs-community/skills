@@ -1,9 +1,13 @@
 # Components
 
 Every component derives from `ComponentBase<TElement, TProps>`; you use the concrete `Component`.
-A component = one `element` (the declared or given DOM element; a comment marker when the class declares
-none, and a wrapper returned from `view()` is then a child, not the element) + a live child collection
-(`controls`) + bindings.
+A component = its own `element` + a live child collection (`controls`) + bindings. The element is the
+declared or given DOM element of a class (`Component<HTMLDivElement>`, `static elementTag`,
+`super('div')`), the `el` of an Options object, or the root a function component returns; a class or an
+Options object that declares none is a fragment (a comment marker). For class and Options components
+`view()` returns the content placed inside the element, never the element itself: a `div` component
+whose `view()` returns `<div class="card">…</div>` renders two nested `div`s. Give the element its own
+classes, attributes and listeners in `onConfigured` (`this.class`, `this.attr`, `this.motif.on`).
 
 ## Class component (pages and views bound to a model)
 
@@ -23,13 +27,15 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
     this.state.loading = false;
   }
 
+  onConfigured() { this.class.add(() => this.props.highlighted ? 'card active' : 'card'); }
+
   onMounted() { this.element.focus(); }                      // element attached to document (onBuilt may run detached)
 
   view() {
     return (
-      <div class={() => this.props.highlighted ? 'card active' : 'card'}>
+      <>
         {this.state.loading ? <span>Loading…</span> : <b>{() => this.state.user?.name}</b>}
-      </div>
+      </>
     );
   }
 }
@@ -37,12 +43,12 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
 
 ### Constructor forms (`Component`)
 
-| Call | Root element |
+| Call | The component's own element |
 |---|---|
-| `super('div')` / `super('div', props)` | `<div>` |
+| `super('div')` / `super('div', props)` | `<div>`; a tag passed to `super` wins over a declared element type |
 | `super(existingNode, props)` | wraps an existing DOM node |
-| `super(props)` / `super()` on `class X extends Component<HTMLDivElement>` | element from the declared generic (`static elementTag`, injected by the compiler; can also be written by hand: `static elementTag = 'section'`) |
-| `super(props)` / `super()` with no declared element type | **fragment** (comment marker; children are inserted between markers; no attributes/events on the root) |
+| no constructor, or `super(props)` / `super()`, on `class X extends Component<HTMLDivElement>` | element from the declared generic (`static elementTag`, injected by the compiler; can also be written by hand: `static elementTag = 'section'`) |
+| no constructor, or `super(props)` / `super()`, with no declared element type | **fragment** (comment marker; children are inserted between markers; attributes and DOM events on its tag reach nothing) |
 | `super(['a','b'])` | fragment holding one child component per array entry |
 
 Use SVG by declaring `Component<SVGSVGElement>` (namespace injected) or passing `{ options: { isSvg: true } }`.
@@ -80,7 +86,8 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
 - Lifecycle props (`onConfig`, `onBuilt`, `onMounted`, … and their `x-` forms) and `initializeComponent` are removed from
   `props` and registered as hooks. A function `ref` (JSX always passes `ref` as a function) is applied to the component and
   removed from `props`; an object `ref` passed without JSX stays as `props.ref` (see Refs). On a component tag, a known DOM event name (`onclick`, `onChange`,
-  `oninput:once`) compiles to a listener on the root element (`motif.on`) and never reaches `props`.
+  `oninput:once`) compiles to a listener on the component's own element (`motif.on`) and never reaches `props`;
+  on a fragment component it sits on the comment marker and never fires, with no warning.
   Every other `on*` prop (`onSave`, `onValueChange`) is an ordinary callback prop in `this.props`.
 - `options={{ hideStrategy, disableDisposal }}` is copied into `this.motif.options`; other keys of
   `options` (apart from `isSvg`, read when the element is created) are ignored, so do not use
@@ -96,11 +103,12 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
 
 ```tsx
 class Panel extends Component<HTMLDivElement, { title: string }> {
+  onConfigured() { this.class.add('panel'); }
   view() {
-    return <div class="panel">
+    return <>
       <h3>{this.props.title}</h3>
       <div class="body">{this.childs}</div>
-    </div>;
+    </>;
   }
 }
 <Panel title="Settings"><p>content</p></Panel>
@@ -128,7 +136,10 @@ export function Todo(props: { text: string; done?: boolean }) {
 ## Options-API object
 
 `{ el: 'div', data: reactive({...}), view() {...}, ctor?(props) {...}, ...anything }` — every key except
-`el` and `ctor` is copied onto a component whose root is `el`. `this` inside `view()` is the component.
+`el` and `ctor` is copied onto a component whose own element is `el` (getters and setters are copied as
+accessors). `this` inside `view()` is the component, and `view()` returns the content placed inside `el`,
+as in a class. Always write the `el` key: it is what marks the object as a component; `el: undefined` or
+`el: null` makes it a fragment.
 `ctor(props)` runs once right after creation (before `build()`), with `this` = the component; a throw
 is reported as `MJX122` and the component is still created.
 A function returning such an object works wherever a component goes: a JSX tag, a route `control`,
@@ -174,10 +185,9 @@ receives `undefined`.
 ```tsx
 class Form extends Component<HTMLFormElement> {
   input!: Component<HTMLInputElement>;
+  onConfigured() { this.motif.on('submit:prevent', () => this.input.element.focus()); }
   view() {
-    return <form onsubmit:prevent={() => this.input.element.focus()}>
-      <input ref={this.input} />
-    </form>;
+    return <input ref={this.input} />;
   }
 }
 ```

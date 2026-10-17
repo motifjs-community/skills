@@ -25,7 +25,10 @@
 1. **Block-arrow + local + conditional in child position**: `{() => { const x = …; return c ? <A/> : <B/>; }}` throws
    `ReferenceError: x is not defined` at runtime. Use expression-bodied arrows or a method.
 2. **`class X extends Component` without a generic and without `super('tag')`** becomes a fragment;
-   attributes/events on the component tag itself are lost. Declare `Component<HTMLDivElement>`.
+   attributes and DOM events written on the component tag are lost silently, and a wrapper returned from
+   `view()` is a child, not the component's element. Declare `Component<HTMLDivElement>`. With an element
+   declared, a wrapper returned from `view()` is a second element inside it (`<div><div>…</div></div>`):
+   configure the component's own element in `onConfigured` and return only the content.
 3. Files with `//useReact` or `//useVue` are skipped; make sure no stray marker exists.
 4. Only `.jsx .tsx .aio .mjsx .mtsx` are transformed; JSX inside `.ts` is not.
 5. `@Injectable` is a standard decorator; the Vite plugin lowers it in the JSX files it compiles and in

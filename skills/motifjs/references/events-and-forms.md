@@ -12,8 +12,9 @@
 - Names are lowercase DOM names (`onclick`, `onchange`, `onkeydown`, `onpointerdown`). On a plain tag any
   DOM event binds this way, and a camelCase spelling (`onClick`) binds the same event.
 - On a **component tag**, a prop named like a DOM event (`onchange`/`onChange`, `onCopy`, `onResize`,
-  `onSelect`, `onReset`, `onContextMenu` …) is bound as a DOM listener on the component's root element and
-  never reaches `this.props` (the compiler warns `MJX002` for the camelCase spelling). Name callback props
+  `onSelect`, `onReset`, `onContextMenu` …) is bound as a DOM listener on the component's own element and
+  never reaches `this.props` (the compiler warns `MJX002` for the camelCase spelling). On a fragment
+  component (no element) the listener sits on its comment marker and never fires, with no warning. Name callback props
   so they do not collide: `onValueChange`, `onConfirm`.
 - A handler that throws, or an async handler whose promise rejects, is reported as `MotifError` `MJX123`
   (`The '<event>' event handler threw.`, original error in `cause`) through `errorHandler`: logged to the
