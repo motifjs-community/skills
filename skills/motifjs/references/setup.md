@@ -178,7 +178,7 @@ app.run('#app', new AppRoot());  // explicit root component
 - `attr={() => v}` → reactive attribute binding; `attr={a + b}` / `attr={!s.open}` / `attr={s.x}` → wrapped in a getter (live);
   `attr={v}` → passed as is (live only when `v` is a function); literals (`0`, `-1`, `true`/`false`, `null`,
   arrays, `new X()`) → passed as values
-- `class X extends Component<HTMLDivElement>` → injects `static elementTag = 'div'`
+- `class X extends Component<HTMLDivElement>` → injects `static elementTag = 'div'` (also in `.ts`/`.mts`/`.cts` files)
 
 Attribute names starting with `x-` are normalised: `x-ref` → `ref`, lifecycle names `x-config` /
 `x-built` / `x-mounted` … → `onConfig` / `onBuilt` / `onMounted` … (several spellings of one hook

@@ -74,9 +74,11 @@ export function text(value: string): ComponentBase {
 
 ## Class pages and layouts in a `.ts` file
 
-**The compiler does not run on `.ts` files**, so `class Page extends Component<HTMLDivElement>` gets no
-`static elementTag` there and is a **fragment**: `this.class`, `this.attr` and `this.motif.on` have no
-element to act on, and a CSS grid sees the children, not the page. Two correct shapes:
+The Motif Vite plugin also processes `.ts`, `.mts` and `.cts` files: `class Page extends Component<HTMLDivElement>`
+gets `static elementTag = 'div'` there as in a `.tsx` file, so the page has its own element. A class that
+declares no element type is a **fragment**: `this.class`, `this.attr` and `this.motif.on` have no element to
+act on, and a CSS grid sees the children, not the page. Where the plugin does not process the file (a library
+compiled with plain `tsc`), write `static elementTag = 'div'` or call `super('div')`. Two correct shapes:
 
 ```ts
 // 1. No element declared (the starter's choice): the component is a fragment and view() returns its
@@ -97,9 +99,8 @@ export default class SettingsPage extends Component {
   private appearance() { /* returns one component */ }
 }
 
-// 2. A declared element, written by hand; view() then returns the children.
+// 2. A declared element; view() then returns the children.
 export class Panel extends Component<HTMLDivElement> {
-  static elementTag = 'div';            // or constructor() { super('div'); }
   override onConfigured() { this.class.add('panel'); }
   override view() {
     return motifFragment({ initializeComponent: (f: ComponentBase) => f.controls.add(heading(), body()) });
@@ -157,9 +158,10 @@ it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `F
 
 ## Pitfalls of hand-written views
 
-1. **A fragment by accident.** `Component<HTMLDivElement>` in a `.ts` file is a fragment (above); write
-   `static elementTag` or call `super('div')`. Returning a wrapper from `view()` does not give the
-   component an element: it stays a fragment and the wrapper is its first child.
+1. **A fragment by accident.** A class that declares no element type is a fragment, and so is a
+   `Component<HTMLDivElement>` class in a file the Motif Vite plugin does not process (a library compiled with
+   plain `tsc`); write `static elementTag` or call `super('div')` there. Returning a wrapper from `view()`
+   does not give the component an element: it stays a fragment and the wrapper is its first child.
 2. **Errors inside `initializeComponent` are swallowed** (`MJX122`, SKILL.md rule 14): the element
    renders empty and `console.error` is the only sign. Typical cause: a `const` that shadows a helper used
    in its own setup (`const text = motifComponent('p', (p) => p.controls.add(text('…')))` calls the

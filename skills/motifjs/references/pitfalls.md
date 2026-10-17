@@ -30,7 +30,9 @@
    declared, a wrapper returned from `view()` is a second element inside it (`<div><div>…</div></div>`):
    configure the component's own element in `onConfigured` and return only the content.
 3. Files with `//useReact` or `//useVue` are skipped; make sure no stray marker exists.
-4. Only `.jsx .tsx .aio .mjsx .mtsx` are transformed; JSX inside `.ts` is not.
+4. Only `.jsx .tsx .aio .mjsx .mtsx` are compiled as JSX; JSX inside `.ts` is not. In `.ts`/`.mts`/`.cts` files
+   the plugin still injects `static elementTag` for a `Component<HTMLDivElement>` class, so the class has its own
+   element there too.
 5. `@Injectable` is a standard decorator; the Vite plugin lowers it in the JSX files it compiles and in
    `.ts`/`.mts`/`.cts`/`.js`/`.mjs`/`.cjs` files, not under `node_modules` or in `.d.ts` files; a `.ts`/`.js`
    file whose nearest tsconfig sets `experimentalDecorators: true` is left to esbuild's legacy transform. Only the

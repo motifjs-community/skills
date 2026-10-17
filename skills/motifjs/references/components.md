@@ -47,7 +47,7 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
 |---|---|
 | `super('div')` / `super('div', props)` | `<div>`; a tag passed to `super` wins over a declared element type |
 | `super(existingNode, props)` | wraps an existing DOM node |
-| no constructor, or `super(props)` / `super()`, on `class X extends Component<HTMLDivElement>` | element from the declared generic (`static elementTag`, injected by the compiler; can also be written by hand: `static elementTag = 'section'`) |
+| no constructor, or `super(props)` / `super()`, on `class X extends Component<HTMLDivElement>` | element from the declared generic (`static elementTag`, injected by the Motif Vite plugin in `.tsx`/`.jsx` and `.ts`/`.mts`/`.cts` files; can also be written by hand: `static elementTag = 'section'`) |
 | no constructor, or `super(props)` / `super()`, with no declared element type | **fragment** (comment marker; children are inserted between markers; attributes and DOM events on its tag reach nothing) |
 | `super(['a','b'])` | fragment holding one child component per array entry |
 
