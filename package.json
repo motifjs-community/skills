@@ -1,6 +1,6 @@
 {
   "name": "@motifx-community/skills",
-  "version": "1.2.0-rc.12",
+  "version": "1.2.0-rc.13",
   "description": "Agent Skills that teach AI coding agents to build, modify and debug MotifJS applications (@motifx/core + @motifx/compiler).",
   "keywords": ["motifjs", "motifx", "agent-skills", "claude", "skills", "ai"],
   "homepage": "https://motifjs.com",
