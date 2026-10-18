@@ -205,9 +205,9 @@ returns), so use a ref to store the component (`ref={(b) => (this.okButton = b)}
 - A JSX `ref` is not a prop: it runs only on the component it was given to (a class component itself, a
   function component's returned root). It is absent from the `props` a function component receives and
   from `this.props`, so spreading `{...props}` / `{...this.props}` never passes it to an inner component.
-  Without JSX, `new Card({ ref })` (or `{ runover: { ref } }`) applies it to that component the same way.
+  Without JSX, `new Card({ ref })` applies it to that component the same way.
   Rule: a function ref is called with the component and removed from props; an object ref is
-  assigned the component in place (`props.ref` / `runover.ref`), e.g. `const p = { ref: {} }; const c = new Card(p); p.ref === c`.
+  assigned the component in place (`props.ref`), e.g. `const p = { ref: {} }; const c = new Card(p); p.ref === c`.
 - To expose an inner element, use a separately named prop and pass it to the inner tag's `ref`
   (`ref={props.inputRef}` or `ref={(c) => props.inputRef?.(c)}`):
 

@@ -186,8 +186,8 @@ on a tag become one ordered list: `onBuilt: [a, b]`), `on:name` / `on-name` / `o
 `sender.motif.on("name", fn)` with the handler passed as is (only the prefix is stripped), `ref` / `x-ref`
 → one `ref` function (or an ordered list when both are written; the runtime takes it out of the props
 before the component or the function sees them), the code generated for the tag → `initializeComponent`
-(inside `runover` on component tags, merged with a user-written `initializeComponent` as `[user, compiled]`),
-lifecycle spellings on component tags → `runover`, `x-wait` / `x-display` /
+(merged with a user-written `initializeComponent` as `[user, compiled]`),
+`x-wait` / `x-display` /
 `x-html` / `x-style` → the corresponding bindings. `@Injectable` and other standard decorators are
 lowered by the plugin (in the JSX files it compiles and in plain `.ts`/`.js` files, with the exceptions
 listed in the Vite comment above); only the registration is runtime: `builder.build()` registers the

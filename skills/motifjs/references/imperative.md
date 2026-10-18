@@ -47,7 +47,7 @@ output.
   test-suite writes.
 - `motifFragment({ initializeComponent: (f) => f.controls.add(a, b) })` is a fragment for a branch or a
   slot with several roots (comment markers in the DOM; no attributes, no events on it).
-- A third argument (`1`) and the keys `runover`, `__childExpr`, `__isSvgElement` appear in compiled
+- A third argument (`1`) and the keys `__childExpr`, `__isSvgElement` appear in compiled
   output; they are compiler bookkeeping. Hand-written code leaves them out and never calls
   `motifCompiled` / `_mv`.
 
@@ -154,7 +154,7 @@ What still works in `.ts`: `@Injectable` and the other decorators (the Vite plug
 it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `FNComponent`,
 `_mv(1)` = `motifCompiled` (drop it), `preconfig` = `x-wait` / `x-display`, `indexkey` = `key`,
 `__isSvgElement: true` = `options: { isSvg: true }`, `ref: (s) => { this.x = s; if (this.onRefCreated) … }`
-= `ref: (s) => (this.x = s)`. Drop `runover: {}`, `childs: []` and the trailing `, 1`.
+= `ref: (s) => (this.x = s)`. Drop `childs: []` and the trailing `, 1`.
 
 ## Pitfalls of hand-written views
 

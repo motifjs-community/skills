@@ -63,7 +63,7 @@ later entries always use `enter*Class`.
 `transition` writes no HTML attribute. On a plain tag (`<div transition="fade">`), a class component tag
 and a function component tag (applied to the returned root; the tag wins over a `transition` written on
 the root inside the function) it sets the component's transition; it is applied the same way when it
-arrives through a spread or inside `runover`. A getter — which is what a ternary on the tag compiles to
+arrives through a spread. A getter — which is what a ternary on the tag compiles to
 (`transition={state.fast ? 'quick' : 'slow'}`) — is followed for the component's lifetime, and a getter
 that returns `null` or `''` clears the transition.
 
