@@ -54,7 +54,7 @@ The name is free-form, so the parameters are typed `any`; give the data its type
 
 `once`, `prevent`, `stop`, `capture`, `passive`, `self` (only when `event.target === element`),
 `trusted` (only `isTrusted`). A JSX attribute takes one modifier (`onclick:once`, `onscroll:passive`; JSX syntax allows a single `:`);
-chains such as `click:once:prevent` are written with the imperative API below.
+chains such as `click:once:prevent` are written with the imperative API below. `:once` holds for every path: a DOM dispatch or a `motif.trigger('click:once', …)` runs the handler one time and removes it (`hasEvent` turns `false`).
 
 ## Imperative event API
 

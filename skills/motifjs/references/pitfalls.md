@@ -107,14 +107,16 @@
   component tag non-lifecycle `on*` props stay in `this.props` (the compiler wires known DOM event
   names written inline, see below).
 - **The compiler warns you.** `@motifx/compiler` emits non-fatal build warnings with file, line and a
-  code frame: `MJX001` (block-bodied arrow declaring locals then returning a conditional →
+  code frame: `MJX001` (block-bodied arrow with parameters declaring locals then returning a conditional →
   `ReferenceError`), `MJX002` (camelCase DOM event name on a component tag — `<Comp onChange>` binds
   a DOM listener, not a callback prop; lowercase `<Button onclick>` is the deliberate spelling and is
   never warned), `MJX003` (`.map()` item without `key`; rows are matched by the item object, so the key only feeds the
   `MJX202` duplicate check), `MJX004` (`some`/`every`/`find` on a `this.`
   rooted array inside a reactive getter loses dependencies), `MJX007` (unknown `x-*` name; it is passed on
   as an `on<name>` prop), `MJX015` (a class component override of `build`/`dispose`/`style`/… that
-  can finish without reaching `super`; checked in `.ts`/`.js` files too). Disable with
+  can finish without reaching `super`; checked in `.ts`/`.js` files too), `MJX016` (a `switch` or
+  `return a ? b : c` getter the compiler cannot lower — non-literal `case` label, `return` or JSX before the
+  `switch`, `break` leaving it — runs as `bindings.method`: no branch is kept). Disable with
   `compiler({ diagnostics: false })`. A separate type-aware check, `npx motif-lint`,
   reports `MJX005`: a ternary on a component prop whose declared type is not `Bind<T>` (the compiler
   cannot see prop types; TypeScript does not see the getter wrapping). A hit is a real contract
@@ -208,7 +210,8 @@
 - **Chained state settles in the same microtask.** Effect A writing state that effect B reads is
   supported and order-independent; one `await tick()` is enough.
 - An effect that throws does not abort the rest of the flush; the error is reported as `MJX208` and reaches
-  `errorHandler.addListener(fn)` as `MotifError` (original error in `cause`).
+  `errorHandler.addListener(fn)` as `MotifError` (original error in `cause`). The throwing run has no value:
+  `effect(getter, onValue)` does not call `onValue`, and a `when`/`ternary`/`switchCase` branch keeps its content.
 - `scoped` services: one instance per navigation (everything the navigation puts on screen, constructor
   injection included, shares it; callers hold a handle that follows the current navigation); without a
   router there is one instance on the root provider, disposed with `app.provider.dispose()`. See di.md.

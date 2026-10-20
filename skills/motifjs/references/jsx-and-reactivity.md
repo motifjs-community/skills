@@ -12,7 +12,7 @@ import { reactive, useModel, createSignal, createComputed, effect, untracked, de
 | `createSignal(v)` / `new Signal(v, equals?)` / `Signal.create(v, equals?)` | `.value` get/set, `.peek()`, `.update(fn)`, `.mutate(fn)`, `.notify()`, `.asReadonly()`, `.dispose()`. |
 | `createComputed(fn)` | Eager, cached derived value: computed at creation and recomputed on dependency change even when unread; `.value`, `.peek()`, `.dispose()`. |
 | `createLazyComputed(fn)` | Lazy derived value: nothing is computed until `.value` is read; a dependency change only marks it dirty (synchronously) and wakes its readers; `.value`, `.peek()`, `.isDirty`, `.dispose()`. |
-| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking; `value` is typed from `fn`'s return type. Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
+| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking; `value` is typed from `fn`'s return type. If `fn` throws, `onValueChanged` is not called for that run (`MJX208` is reported, tracking continues). Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
 | `untracked(fn)` | Reads inside are not tracked by the enclosing effect; returns `fn`'s value. Nested `effect()` calls still track normally. |
 | `deepClone(v)`, `clearModel(m)` | Utilities. |
 | `asyncTracking` | `capture()`/`suspend()`/`resume()`/`end()`; emitted by the compiler around `await` in a `Virtualization` `dataRequest` so reads after `await` stay tracked. Not needed in app code. |
@@ -161,7 +161,9 @@ On a **plain DOM tag** the spread object is applied as if the attributes were wr
 `class`/`className` → `class.add` (merged with an inline `class`), `style` → `style()`, `value`/`checked`/
 `selected` → property binding, `on*` (`onclick`, `onClick`, `oninput:once`) → DOM listener, everything else
 → attribute. Getters stay live; functions that take parameters (`renderItem: (x) => …`) are skipped.
-Inline attributes are applied after the spread, so `<div {...p} id="fixed"/>` keeps `id="fixed"`.
+Inline attributes are applied after the spread, so `<div {...p} id="fixed"/>` keeps `id="fixed"`, even when
+`p.id` is a getter: the inline write owns the attribute and the getter stops writing it (the spread's other
+getters stay live). The same rule holds for `attr.add`: the last `attr.add` for a key owns that key.
 A spread never sets `innerHTML` or `srcdoc` (dev warning `MJX124`) and never writes a `javascript:` URL to `href`/`src`/
 `action`/`formaction`/`xlink:href` (dev warning `MJX125`; a getter's current value is removed). Use `x-html` (or inline `srcdoc`) for
 trusted HTML and write an intended `javascript:` link inline on the tag; inline attributes are not filtered.
@@ -178,7 +180,8 @@ component declares under the same name keeps its own type. The component's own
 Function components behave the same: the tag's common attributes land on the returned root (no double
 application when the root is `<div {...props}/>`). A component without an element (a fragment: a class that
 declares none, an Options object with `el: undefined`/`null`) silently ignores them, and DOM event props on
-its tag never fire.
+its tag never fire. An Options object whose `el` is a ready DOM node is a component root exactly like
+`el: 'div'`: the same common attributes fall through and nothing else is written to the node.
 
 ### `class` / `className`
 
@@ -201,8 +204,8 @@ On a **plain DOM tag**, props named after element methods call the method instea
 attribute. A getter or reactive field re-applies on every change (`showModal={() => state.open}`);
 the call runs one microtask later. On a component tag these names are ordinary props.
 
-- `focus`: only strict `false` → `blur()`; every other value (`true`, `undefined`, `null`, `0`, `''`) → `focus()` / `focus(value)`
-  (`focus={{ preventScroll: true }}`). `focus={() => f.editing}` with `editing` starting `undefined`
+- `focus`: only strict `false` → `blur()`; an object → `focus(options)` (`focus={{ preventScroll: true }}`);
+  every other value (`true`, `undefined`, `null`, `0`, `''`) → `focus()` with no argument. `focus={() => f.editing}` with `editing` starting `undefined`
   therefore calls `focus()` on the first run; start the field at `false`.
 - `show`, `showModal` / `showPopover`: truthy → call, `false` → `close()` / `hidePopover()`.
 - `togglePopover`: boolean → `togglePopover(bool)`, other truthy → `togglePopover()`.
@@ -211,7 +214,8 @@ the call runs one microtask later. On a component tag these names are ordinary p
 - `close`, `hidePopover`, `requestSubmit`, `checkValidity`, `reportValidity`, `showPicker`, `load`:
   `true` → `method()`, other truthy → `method(value)` (`close={() => 'cancel'}`); falsy → nothing.
 - `blur`, `click`, `pause`, `submit`, `reset`, `exitFullscreen`, `exitPointerLock`,
-  `requestPictureInPicture`, `exitPictureInPicture`: truthy → call; falsy → nothing.
+  `requestPictureInPicture`, `exitPictureInPicture`: truthy → call; falsy → nothing. The three `exit*`
+  methods are called on `document`, not on the element.
 - `scrollIntoView`: `true`/`null`/`undefined` → `scrollIntoView()`, anything else (including `false`) → `scrollIntoView(value)`.
 - `scrollTo`, `scrollBy`: only an object or array → `method(value)`.
 - `setSelectionRange`, `setRangeText`, `setPointerCapture`, `releasePointerCapture`, `fastSeek`:
@@ -329,5 +333,6 @@ are not registered bindings and are not re-run. A binding that throws while refr
   even when their `key`/`id` is the same.
 - An effect or binding getter that throws is reported as a `MotifError` with code `MJX208` (original
   error in `cause`) to the console and `errorHandler.addListener(fn)` listeners; the other effects in
-  the flush keep running. A throwing (or rejected async) event handler is reported as `MJX123`.
+  the flush keep running. The throwing run produces no value: `effect`'s `onValueChanged` is not called and
+  a `when`/`ternary`/`switchCase` branch, like `text`/`attr`/`class`, keeps its last good state. A throwing (or rejected async) event handler is reported as `MJX123`.
 - Updates are flushed on a microtask; in tests `await Promise.resolve()` (the local `nextTick()` helper in testing.md; `@motifx/core` exports none) before asserting.

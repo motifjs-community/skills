@@ -72,9 +72,10 @@ probe.attach();
 
 ```ts
 compiler({
-  diagnostics: false,        // silence the MJX001–MJX004, MJX007 and MJX015 compile-time warnings (default: on)
+  diagnostics: false,        // silence the MJX001–MJX004, MJX007, MJX015 and MJX016 compile-time warnings (default: on)
   explain: 'pages/Home',     // print "what did this expression compile to" for matching files
                              //   true = every file; string = path includes; RegExp = test(id)
+  exclude: 'legacy/',        // files the plugin leaves alone (string = path includes; RegExp = test(id); (id) => boolean); their JSX goes to Vite's own transform
   storeNames: true,          // name top-level module stores for DevTools (default: on in vite dev, off in production builds)
   production: true,          // remove development-only code (default: vite build in Vite, NODE_ENV=production elsewhere)
 })
@@ -90,7 +91,7 @@ its reactivity class and its dependency surface. Use it whenever you are unsure 
 ```sh
 npx motif-explain src/pages/Home.tsx              # readable dump, source order
 npx motif-explain src/pages/Home.tsx --site prop  # only component props (child|element|attr|prop|event|component-event|directive|key)
-npx motif-explain src/pages/Home.tsx --json --code
+npx motif-explain src/pages/Home.tsx --json --code   # { explanations, code: { file: generated } }
 ```
 
 Reactivity classes: `LIVE` (live effect), `STATIC` (literal such as a string, number, negative number, boolean or `null`; no binding), `ONCE` (evaluated once

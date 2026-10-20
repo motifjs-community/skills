@@ -30,7 +30,7 @@ app.onLifecycle(({ state, visible, online }) => …) → unsubscribe fn   // sta
 app.isVisible; app.isOnline
 app.useDevelopment(bool = true); app.useLogging(bool = true); app.useReactiveMonitor({ enabled, threshold, name })
 app.isDevelopmentModeEnabled; app.restartRouter() (builds a fresh router from the latest useRouter config and restarts at the current address/shown page: routes, keepAlive cache, stack and scroll memory reset; page rebuilt; onRouterChanged fires with initial: true; no-op before run)
-app.provider: ServiceProvider; app.getAppShell(): Component; app.dispose(): Promise<void>   // sync: state 'disposing', router, lifecycle listeners, address '/' (replaceState); then pages (leave animations), RouterView, run() shell, LAST the provider (async disposes awaited) and Application.main = null; components keep seeing services/context until then; a second call returns the same promise; the host element stays
+app.provider: ServiceProvider; app.getAppShell(): Component; app.dispose(): Promise<void>   // sync: state 'disposing', router, lifecycle listeners, address reset by mode (history '/', hash/file clears '#', shell/no router untouched); then pages (leave animations), RouterView, run() shell, LAST the provider (async disposes awaited) and Application.main = null; components keep seeing services/context until then; a second call returns the same promise; the host element stays
 app.state: 'initializing' | 'running' | 'disposing' | 'disposed'   // a new CreateBuilder() is allowed while the previous app is 'disposing'; its torn-down pages still resolve their own app
 app.insert(c) / app.attach(c)  // add to the app shell; app.remove(c) (dispose) / app.detach(c) (no dispose); app.appendToMainHost(node)
 useNavigation(): Router   // the same object as app.router; read nav.params.id live, destructuring keeps that moment's value
@@ -99,7 +99,7 @@ motif.options                                          // transition, hideStrate
 ```ts
 reactive<T>(m: T): T; useModel<T>(m: T): T
 createSignal<T>(v): Signal<T>; new Signal(v, equals?); Signal.create(v, equals?); createComputed<T>(fn): Computed<T>; createLazyComputed<T>(fn): LazyComputed<T>
-effect(fn, onValueChanged?): () => void   // onValueChanged(value) runs after every run of fn (the first included) with fn's return value, untracked
+effect(fn, onValueChanged?): () => void   // onValueChanged(value) runs after every run of fn (the first included) with fn's return value, untracked; a run in which fn throws has no value: onValueChanged is not called, MJX208 is reported, tracking continues
 untracked(fn): T; deepClone(v); clearModel(m)
 Signal: value, peek(), update(fn), mutate(fn), notify(), asReadonly(): ReadonlySignal<T>, dispose()
 Computed: value, peek(), dispose(); LazyComputed: value, peek(), isDirty, dispose()
@@ -241,7 +241,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX205` | reported | `Virtualization` `watch` callback threw |
 | `MJX206` | dev warning | `Virtualization` `autoRefresh` stopped (`dataRequest` keeps changing the data it reads) |
 | `MJX207` | reported | `Virtualization` data load failed |
-| `MJX208` | reported | an effect threw |
+| `MJX208` | reported | an effect threw; that run has no value, `onValueChanged` is not called |
 | `MJX301` | dev warning | a layout's `RouterView` outlet was not built within 3000 ms |
 | `MJX302` | thrown | `href` / `evict` with an unknown route name |
 | `MJX303` | dev warning | redirect loop or more than 10 redirects; `fallbacks.error` renders |
@@ -260,11 +260,12 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX601` | thrown | `Query.first()` on an empty sequence |
 | `MJX602`–`MJX605` | thrown | `Resilience`: circuit open / bulkhead queue full / rate limit exceeded / timeout (`TimeoutError`) |
 
-Compiler (`@motifx/compiler`): warnings `MJX001` (block-bodied arrow in child position declares locals the
+Compiler (`@motifx/compiler`): warnings `MJX001` (block-bodied arrow with parameters in child position declares locals the
 branches cannot see), `MJX002` (camelCase DOM event name on a component tag), `MJX003` (`.map()` item without
 `key`), `MJX004` (`some`/`every`/`find`… inside a reactive getter), `MJX007` (unknown `x-*` directive, passed on
 as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method/accessor that does not reach
-`super` on every path; also checked in `.ts`/`.js` files, base followed across files); `MJX005` from `motif-lint`
+`super` on every path; also checked in `.ts`/`.js` files, base followed across files), `MJX016` (a `switch` or
+`return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`
 (ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors `MJX006`
 (unsupported directive), `MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
 `MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal),

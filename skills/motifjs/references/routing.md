@@ -34,8 +34,10 @@ A lazily imported page must be the module's `export default`; for a named export
 throws `MJX127`, reported as the `cause` of `MJX304`, and `fallbacks.error` is shown.
 `extend.targetOutlet: 'name'` mounts the route into the named `<RouterView name="name">` instead of
 `default`. `validate(e)` runs for every route of a candidate chain (layouts included) and receives
-`{ uri, key, routes, params }` (`key`: the route's `name`, else its full path; `params`: the matched
-path and query params); returning `false` makes the route not match (another route or `notFound` wins).
+`{ uri, key, routes, params }` (`key`: the route's `name`, else its own full path, under an alias match too;
+`routes`: a `Map` of every route keyed by the same rule, so `routes.get(e.key)` is the route being validated
+and any other route is reached by name or full path; `params`: the matched path and query params);
+returning `false` makes the route not match (another route or `notFound` wins).
 
 Hook order: the current route's `onLeave` → app guards (`useGuard`) → `onUpdate` (same route, params
 changed only) → `onEntering` (page not created, not in the DOM yet) → page built and mounted →
@@ -67,6 +69,11 @@ child components) — state, scroll, timers survive. Without
 the flag a new instance is built on every visit. Cached instances are released by
 `app.router.evict('routeName')` / `app.router.evict(routeItem)` / `app.router.evict()` (all; the instance
 currently on screen is skipped) or `app.dispose()`. An unknown route name rejects with `MJX302`.
+A route whose `control` is a ready instance (or a Promise resolving to one) behaves like `keepAlive`
+without the flag: the instance is built once, detached on leave, re-attached on return, not rebuilt on a
+parameter change (`onUpdate` runs); `evict()` does not dispose it, `app.dispose()` does. Entering a route
+whose instance is disposed (also a factory handing back a disposed instance) reports `MJX318` inside
+`MJX304` and shows the error route; a page that needs fresh state on every entry takes a class or a factory.
 
 Query the route table without navigating: `app.router.resolve(uri)` returns `{ chain, result }`: `chain` is
 `string[]` like `app.router.chain` (each route's own path, params filled: `['/admin', '/logs/today']`) and
@@ -127,10 +134,9 @@ const routes: RouteItem[] = [
 | `{id?}` | optional |
 | `{id?:5}` | optional with default (`params.id` is `'5'` when absent) |
 
-`href`, `navigateByName` and string `redirect` targets fill `{…}` placeholders.
+`href`, `navigateByName` and string `redirect` targets fill `{…}` placeholders; values are encoded with `encodeURIComponent` (`'a/b'` → `a%2Fb`, `'çay'` → `%C3%A7ay`).
 
-`params` also holds the query string. Query values are strings, exactly as written in the address (after
-URL decoding), just like path params: `/users/5?page=2` → `{ id: '5', page: '2' }`. Nothing is converted:
+`params` also holds the query string. Query values are strings, percent-decoded, just like path params (`/tags/%C3%A7ay` → `name: 'çay'`; `+` is a space only in the query): `/users/5?page=2` → `{ id: '5', page: '2' }`. Nothing is converted:
 `true`, `null`, `42`, `2025-10-27` and `{"a":1}` all stay text, so convert where a number, boolean or date
 is needed (`Number(params.page)`).
 
@@ -172,7 +178,7 @@ Off by default. When enabled the router stores the scroll position of every visi
 back when you return there (back/forward, link click, page reload — the positions live in
 `sessionStorage`). A hash in the URL wins over the stored position; a path seen for the first time
 starts at the top; a per-navigation `scroll` option (`app.router.navigate('/x', { scroll: 'top' })`)
-overrides the memory. Restoring, the top of a new page, an anchor reached from another page and
+overrides the memory (it scrolls the configured `container`, else the window; the page still records its position). Restoring, the top of a new page, an anchor reached from another page and
 back/forward scroll instantly even with CSS `scroll-behavior: smooth`; only an anchor link within the
 same page (router link, or a plain `<a href="#id">` in `history` mode) follows the CSS `scroll-behavior`.
 
@@ -236,6 +242,7 @@ everything on screen in it (see `di.md`).
 import { RouterLink } from '@motifx/core';
 <RouterLink to="/docs" el="a" activeClass="active" exactClass="exact">Docs</RouterLink>
 ```
+`rel` may hold other tokens too (`rel="router nofollow"`); the `router` token is what counts.
 `<a>` interception also works with `data-router-link`; clicks with Ctrl/Meta/Shift/Alt, links whose
 `target` is not `_self`, and (in `history` mode) other-origin URLs are left to the browser.
 
@@ -341,8 +348,8 @@ effect through `restartRouter()`), otherwise the current config. It restarts at 
 (`shell` mode: the page the router shows, `/` if it never navigated); the route table is rebuilt, the
 `keepAlive` cache and stack-kept pages are disposed, the page is rebuilt, no history entry is added, and
 `onRouterChanged` fires with `initial: true`, `direction: 'initial'`. Before `run()` it does nothing.
-`app.dispose()` also disposes the router and resets the address to `/` with `history.replaceState` only
-(no hash write, no new history entry). `await app.dispose()` resolves once the pages, the `RouterView`,
+`app.dispose()` also disposes the router and resets the address only in the mode the router owns: `history` → `/` via `replaceState`,
+`hash`/`file` → only the `#` part is cleared, `shell` or no router → untouched (no new history entry). `await app.dispose()` resolves once the pages, the `RouterView`,
 the `run()` shell and then the services are disposed; the host element stays in the page and can host a new `run()`.
 
 ## Page stack — `stack`
@@ -391,8 +398,10 @@ app.useRouter({
 
 `Lazy` (component-level) accepts `retry: number | { count, delayMs = 500, whenOnline = true }` and
 `onRetry(attempt, error)`: failed loads are retried (delay grows linearly), waiting for the `online`
-event while offline. `onError` / `Fallbackview` apply only after the last attempt. Dispose or `signal`
-abort stops retrying and removes listeners. Without `retry` there is a single attempt.
+event while offline. `onError` / `Fallbackview` apply only after the last attempt. A `signal` abort at any
+moment stops retrying and calls `onError` once with `MJX111` (no `Fallbackview`, no report). Disposal stops
+everything silently at its first moment: no `onError`, no report, a load that finishes later is ignored.
+Without `retry` there is a single attempt.
 
 ## Dev linter notes
 

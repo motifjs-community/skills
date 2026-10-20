@@ -70,7 +70,7 @@ this.controls.add(() => <b>x</b>); // a factory is called with no arguments; a c
 this.controls.add(0, child);       // number first + at least one child → insert at that index
 this.controls.insert(2, a, b);     // same as add(2, a, b)
 this.controls.move(child, before); // reorder inside this collection: put `child` before `before` (end when omitted/null); DOM moved, nothing rebuilt
-this.controls.moveToIndex(child, i); // move before the item currently at index i (end when i >= length)
+this.controls.moveToIndex(child, i); // move the child to index i of the resulting list (i >= length-1 → end); DOM follows
 this.controls.remove(child);       // remove + dispose
 this.controls.clear();             // dispose all children
 await this.controls.clearAsync();  // dispose all children and wait until every dispose finished
@@ -92,14 +92,14 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
 - `options={{ hideStrategy, disableDisposal }}` is copied into `this.motif.options`; other keys of
   `options` (apart from `isSvg`, read when the element is created) are ignored, so do not use
   `options` as a data prop name.
-- JSX children are delivered as `this.childs` (`ComponentBase[]`). A component that wants to
-  render them must add them: `this.controls.add(...this.childs)` or `{this.childs}` in `view()`. When the
-  constructor gets no element (fragment root, or a declared element from `Component<HTMLDivElement>` /
-  `static elementTag`), the children are appended to the root automatically, unless the class's JSX places
-  `{this.childs}` / `{() => this.childs}`: then they are built only in that slot, so a slot behind
-  `x-wait` / `x-display` or inside a nested element waits with it (the compiler marks such a class with
-  `static _placesChilds`). With `super('div', props)` nothing is appended for you. Children that are never
-  placed are disposed with the component that received them.
+- JSX children are delivered as `this.childs` (`ComponentBase[]`). One rule: a class with `view()` places
+  them itself (`{this.childs}` / `{() => this.childs}` in JSX or `this.controls.add(...this.childs)`,
+  wherever and whenever, also inside a slot's setup function); a class without `view()` and without a
+  constructor element (fragment root, or a declared element from `Component<HTMLDivElement>` /
+  `static elementTag`) gets them appended to the root automatically. Placed children are built only in
+  their slot, so a slot behind `x-wait` / `x-display` or inside a nested element waits with them. With
+  `super('div', props)` nothing is appended for you. Children that are never placed are disposed with the
+  component that received them.
 
 ```tsx
 class Panel extends Component<HTMLDivElement, { title: string }> {
@@ -165,7 +165,7 @@ receives `undefined`.
 | `motif.show()/hide()/toggle()`, `isVisible`, `isWait` | Visibility (lifecycle-and-dispose.md). |
 | `motif.options.hideStrategy` | `'placeholder'`, `'detach'` or `'auto'` (default, behaves as `'placeholder'`). Give it in JSX through the `options` prop (`options={{ hideStrategy: 'detach' }}`) or assign `this.motif.options.hideStrategy` in code. A bare `hideStrategy="detach"` attribute is not special. |
 | `motif.options.display` | Getter returns `isVisible`; assigning `true`/`false` calls `motif.show()`/`motif.hide()`. |
-| `motif.options.hasEvent(name)` | `true` when a `motif.on(name, …)` listener is registered (names are stored lowercased). |
+| `motif.options.hasEvent(name)` | `true` when a `motif.on(name, …)` listener is registered (names are stored lowercased); a `:once` listener that has run is no longer registered. |
 | `motif.options.enableRouterClassing = { to, path, activeClass?, exactClass?, onActive?, offActive?, onExact?, offExact? }` | Setter; toggles the classes on the root on every route change (subscription auto-disposed). `to`: `'all'`, `'active'` (segment-prefix match, exact included), `'exact'` or `'none'`. A failure is reported as `MJX105`. |
 | `motif.options.transition` | Enter/leave animations (styling-and-transitions.md). |
 | `setState()` / `reState()` | Re-run the registered bindings of this subtree (text, attribute, class and style getters, `model`; lists rebuild their rows). Only needed for non-reactive data; `setState` runs the children first, `reState` this component first. |

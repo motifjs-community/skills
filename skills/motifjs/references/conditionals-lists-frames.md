@@ -152,14 +152,17 @@ In JSX write a `switch` inside a block-bodied getter; the compiler turns the `ca
   }}
 </div>
 ```
-`case` labels must be string, number or boolean **literals** (other cases are skipped). Each `case`
-contributes only the argument of its own `return`; a branch without `return` places empty content, so
-fall-through (`case 'a': case 'b': return <X/>;`) leaves `'a'` empty — repeat the `return` per case.
-A branch returning `null` or `undefined` (`default: return null`, `return ok ? <X/> : null`) empties
-the slot too. In a hand-written `switchCase`, `frame.navigate(null)` places nothing and leaves the
-previous content; empty the slot with `frame.flush()`.
-Statements before the `switch` in the block body, and statements before a `return` inside a case, are
-dropped.
+`case` labels must be string, number or boolean **literals**. Statements before the `switch` run in
+the discriminant getter on every evaluation and the branches see those locals; statements before a
+`return` inside a case run when the branch is built; fall-through (`case 'a': case 'b': return <X/>;`)
+shows `X` for `'a'` too; a branch leaving with `break` and the statements after the `switch` run on the
+default path. A branch returning `null` or `undefined` (`default: return null`, `return ok ? <X/> : null`)
+empties the slot. In a hand-written `switchCase`, `frame.navigate(null)` places nothing and leaves the
+previous content; empty the slot with `frame.flush()`. A shape the compiler cannot lower (a non-literal
+`case` label, a `return` or JSX-creating statement before the `switch`, a `break` that leaves the
+`switch`) runs as written through `bindings.method` and warns `MJX016` in development: no branch is
+kept, the content is rebuilt on every change. The same holds for `{() => { const x = …; return c ? <A/> : <B/>; }}`:
+the locals are kept and the condition getter runs them.
 
 ## `Frame` — a slot you navigate programmatically
 

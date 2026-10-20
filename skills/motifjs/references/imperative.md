@@ -169,7 +169,7 @@ it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `F
    checker does not see it. In tests, assert the rendered text or spy on `console.error`.
 3. **`display` / `wait` in the wrong hook.** Registered in `initializeComponent` the hidden element is
    built once; register them in `preconfig`.
-4. **No compiler, no diagnostics.** `MJX001`–`MJX005` and the hoisting rule (SKILL.md rule 5) concern
+4. **No compiler, no diagnostics.** `MJX001`–`MJX005`, `MJX016` and the switch/ternary getter rule (SKILL.md rule 5) concern
    JSX only; nothing warns about a `.map()` without `indexkey` or a prop that should be a getter. A plain
    expression in a branch (`motifComponent(Badge, { count: state.n })`) is a snapshot, exactly as in JSX;
    pass `count: () => state.n`.
