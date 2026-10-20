@@ -249,6 +249,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX306` | reported | a route hook, `onShow` or guard threw (a guard cancels the navigation) |
 | `MJX309` | thrown | navigating before `useRouter()` |
 | `MJX310`–`MJX316` | dev warning | route linter: empty path, child path/alias without `/`, child equals parent path, duplicate full path, alias equals own path, duplicate alias |
+| `MJX319` | dev warning | route linter: `:` outside braces in a path or alias (`/user/:id`); parameters are `{name}`, `:` only gives a default inside braces |
 | `MJX401` | thrown | token not registered (and not `@Injectable`) |
 | `MJX404` | thrown | cyclic service dependency |
 | `MJX405` | thrown | second `Application.CreateBuilder()` while an app is running (allowed once the previous app is `'disposing'`) |

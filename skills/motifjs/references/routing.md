@@ -134,6 +134,8 @@ const routes: RouteItem[] = [
 | `{id?}` | optional |
 | `{id?:5}` | optional with default (`params.id` is `'5'` when absent) |
 
+A `:` outside braces, and the rest of that segment, drops out of the pattern (`/user/:id` → `/user/`, which matches no address); in development the linter warns with `MJX319`.
+
 `href`, `navigateByName` and string `redirect` targets fill `{…}` placeholders; values are encoded with `encodeURIComponent` (`'a/b'` → `a%2Fb`, `'çay'` → `%C3%A7ay`).
 
 `params` also holds the query string. Query values are strings, percent-decoded, just like path params (`/tags/%C3%A7ay` → `name: 'çay'`; `+` is a space only in the query): `/users/5?page=2` → `{ id: '5', page: '2' }`. Nothing is converted:
@@ -410,4 +412,5 @@ With `useDevelopment(true)` called **before** `useRouter()` the router lints rou
 `path: ''` / `'orders'`; use the warning-free form shown above (`'/'` for layouts and default children,
 leading `/` on every child). Other lint codes: `MJX312` (child resolves to its parent's full path),
 `MJX313` (two routes with the same full path), `MJX314` (child alias without leading `/`), `MJX315`
-(alias equal to the route's own path), `MJX316` (duplicate alias).
+(alias equal to the route's own path), `MJX316` (duplicate alias), `MJX319` (`:` outside braces in a path or alias,
+such as `/user/:id`; parameters are `{name}`).
