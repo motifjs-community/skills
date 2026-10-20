@@ -76,8 +76,8 @@ export function text(value: string): ComponentBase {
 
 The Motif Vite plugin also processes `.ts`, `.mts` and `.cts` files: `class Page extends Component<HTMLDivElement>`
 gets `static elementTag = 'div'` there as in a `.tsx` file, so the page has its own element. A class that
-declares no element type is a **fragment**: `this.class`, `this.attr` and `this.motif.on` have no element to
-act on, and a CSS grid sees the children, not the page. Where the plugin does not process the file (a library
+declares no element type is a **fragment**: `this.class` and `this.attr` have no element to
+act on (`this.motif.on` listens on the content elements), and a CSS grid sees the children, not the page. Where the plugin does not process the file (a library
 compiled with plain `tsc`), write `static elementTag = 'div'` or call `super('div')`. Two correct shapes:
 
 ```ts

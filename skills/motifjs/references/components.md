@@ -87,7 +87,7 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
   `props` and registered as hooks. A function `ref` (JSX always passes `ref` as a function) is applied to the component and
   removed from `props`; an object `ref` passed without JSX stays as `props.ref` (see Refs). On a component tag, a known DOM event name (`onclick`, `onChange`,
   `oninput:once`) compiles to a listener on the component's own element (`motif.on`) and never reaches `props`;
-  on a fragment component it sits on the comment marker and never fires, with no warning.
+  on a fragment component it listens on the content elements (every top-level child element, nested fragments included, later children too).
   Every other `on*` prop (`onSave`, `onValueChange`) is an ordinary callback prop in `this.props`.
 - `options={{ hideStrategy, disableDisposal }}` is copied into `this.motif.options`; other keys of
   `options` (apart from `isSvg`, read when the element is created) are ignored, so do not use

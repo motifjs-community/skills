@@ -14,7 +14,7 @@
 - On a **component tag**, a prop named like a DOM event (`onchange`/`onChange`, `onCopy`, `onResize`,
   `onSelect`, `onReset`, `onContextMenu` …) is bound as a DOM listener on the component's own element and
   never reaches `this.props` (the compiler warns `MJX002` for the camelCase spelling). On a fragment
-  component (no element) the listener sits on its comment marker and never fires, with no warning. Name callback props
+  component (no element) the listener listens on the content elements: every top-level child element, nested fragments included, later children too; `:self`, `:once` and `off` cover all of them. Name callback props
   so they do not collide: `onValueChange`, `onConfirm`.
 - A handler that throws, or an async handler whose promise rejects, is reported as `MotifError` `MJX123`
   (`The '<event>' event handler threw.`, original error in `cause`) through `errorHandler`: logged to the

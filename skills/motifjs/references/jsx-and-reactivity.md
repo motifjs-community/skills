@@ -180,7 +180,7 @@ component declares under the same name keeps its own type. The component's own
 Function components behave the same: the tag's common attributes land on the returned root (no double
 application when the root is `<div {...props}/>`). A component without an element (a fragment: a class that
 declares none, an Options object with `el: undefined`/`null`) silently ignores them, and DOM event props on
-its tag never fire. An Options object whose `el` is a ready DOM node is a component root exactly like
+its tag listen on its content elements. An Options object whose `el` is a ready DOM node is a component root exactly like
 `el: 'div'`: the same common attributes fall through and nothing else is written to the node.
 
 ### `class` / `className`
