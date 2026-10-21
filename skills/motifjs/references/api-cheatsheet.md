@@ -52,7 +52,7 @@ class Component<TElement = any, TProps extends object = any> extends ComponentBa
 FNComponent(view: (props) => JSX): (props) => FragmentNode
 FragmentNode, Frame, Transport, TransportTo, ContentBody, ContentBlock, RouterView, RouterLink, Virtualization<T>
 Lazy({ caller: () => Promise<T>, options?: LazyOptions<T> }): Component      // a function, used as <Lazy …/>
-motifComponent(el, props?), motifFragment(props?), motifCompiled(contract)   // what the compiler emits (_mc / _mf / _mv); MJX121 on a contract mismatch (dev)
+motifComponent(el, props?), motifFragment(props?), motifCompiled(contract), motifReport(error)   // what the compiler emits (_mc / _mf / _mv / _mr); MJX121 on a contract mismatch (dev); motifReport reports a caught getter error as MJX208
 motifOptions(spec)                       // Options object as is; types `this` in its methods as ComponentBase & spec (MotifOptions<T>)
 
 // ComponentBase members

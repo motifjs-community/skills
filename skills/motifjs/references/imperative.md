@@ -49,7 +49,9 @@ output.
   slot with several roots (comment markers in the DOM; no attributes, no events on it).
 - A third argument (`1`) and the keys `__childExpr`, `__isSvgElement` appear in compiled
   output; they are compiler bookkeeping. Hand-written code leaves them out and never calls
-  `motifCompiled` / `_mv`.
+  `motifCompiled` / `_mv`. The `catch (__e) { _mr(__e); … }` around a compiled `{this.part()}`,
+  `{a ?? b}` or `{cond && …}` is bookkeeping too (`motifReport` reports the caught error as `MJX208`);
+  a hand-written getter needs no `try`/`catch`: the runtime reports its error as `MJX208`.
 
 ### `preconfig`
 
@@ -152,7 +154,7 @@ What still works in `.ts`: `@Injectable` and the other decorators (the Vite plug
 `npx motif-explain file.tsx` prints, per expression, the lowered call to write. For a whole file,
 `new Compiler().motifCompile(code, 'file.tsx')` from `@motifx/compiler` returns the compiled code; read
 it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `FNComponent`,
-`_mv(1)` = `motifCompiled` (drop it), `preconfig` = `x-wait` / `x-display`, `indexkey` = `key`,
+`_mv(1)` = `motifCompiled` (drop it), `_mr(__e)` = `motifReport` (drop it with its `try`/`catch`), `preconfig` = `x-wait` / `x-display`, `indexkey` = `key`,
 `__isSvgElement: true` = `options: { isSvg: true }`, `ref: (s) => { this.x = s; if (this.onRefCreated) … }`
 = `ref: (s) => (this.x = s)`. Drop `childs: []` and the trailing `, 1`.
 
