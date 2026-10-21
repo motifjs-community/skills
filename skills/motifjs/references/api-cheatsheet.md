@@ -66,7 +66,7 @@ using(promise, onfulfilled?, onrejected?)   // callbacks skipped once disposed
 doWork(promise): Promise<T>                 // resolves to an Error instance (does not reject) if disposed meanwhile
 getService(token): T | null  // T from any class token (constructor params, abstract, protected ctor); getService<T>(Class) gives the same T; getService<T>(stringOrSymbol) otherwise. Same rule for FromService, inject, provider.get/getAsync. serviceProvider; useModel(obj)
 $(selector): { fromDom(), fromComponent() }; siblings.{all,next,prev,nextAll,prevAll}()
-isBuilt, isInitialized (false in onInitializing, true from onInitialized on), isConfigured, isDisposed, isPainted
+isBuilt, isInitialized (false in onInitializing, true from onInitialized on), isConfigured, isDisposed
 
 // component.motif (ComponentMotif): framework operations; a subclass may define its own show/on/clear/options
 motif.on(event, cb, domEvent = true): Promise<this>; motif.off(event, cb): Promise<this>; motif.trigger(event, args): Promise<this>; motif.addHandler(event, handler)
