@@ -133,8 +133,13 @@ const routes: RouteItem[] = [
 | `{id:1}` | required; `1` is used only when `href` / `navigateByName` builds the path without a value (`/h` does not match `/h/{id:1}`) |
 | `{id?}` | optional |
 | `{id?:5}` | optional with default (`params.id` is `'5'` when absent) |
+| `{id(\d+)}` | pattern constraint, case-insensitive; capturing groups in it are ignored; `?` and `:` inside belong to the pattern; combines: `{id(\d+)?:1}`; no `/` inside |
+| `{path+}` | one or more segments; `params.path` is plain text `'a/b/c'` (each segment decoded on its own); `href` takes `'a/b'` or `['a','b']`; with a pattern it applies per segment: `{ids(\d+)+}` |
+| `{path*}` | like `{path+}` but may be absent (optional, takes a `:default`) |
 
 A `:` outside braces, and the rest of that segment, drops out of the pattern (`/user/:id` → `/user/`, which matches no address); in development the linter warns with `MJX319`.
+
+In the match order a route with `{…+}` or `{…*}` comes after the routes at the same depth with the same number of static segments: `/f/{a}/{b}` before `/f/{rest+}`; `/docs/{rest+}` with its static segment before `/{a}/{b}`. For a pattern that cannot be used (does not compile, `(` never closed, or `/` inside) the linter warns with `MJX320` in development.
 
 `href`, `navigateByName` and string `redirect` targets fill `{…}` placeholders; values are encoded with `encodeURIComponent` (`'a/b'` → `a%2Fb`, `'çay'` → `%C3%A7ay`).
 
@@ -413,4 +418,5 @@ With `useDevelopment(true)` called **before** `useRouter()` the router lints rou
 leading `/` on every child). Other lint codes: `MJX312` (child resolves to its parent's full path),
 `MJX313` (two routes with the same full path), `MJX314` (child alias without leading `/`), `MJX315`
 (alias equal to the route's own path), `MJX316` (duplicate alias), `MJX319` (`:` outside braces in a path or alias,
-such as `/user/:id`; parameters are `{name}`).
+such as `/user/:id`; parameters are `{name}`), `MJX320` (a parameter pattern that cannot be used: does not
+compile, `(` never closed, or `/` inside).

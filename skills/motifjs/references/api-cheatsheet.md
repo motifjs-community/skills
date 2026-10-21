@@ -250,6 +250,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX309` | thrown | navigating before `useRouter()` |
 | `MJX310`–`MJX316` | dev warning | route linter: empty path, child path/alias without `/`, child equals parent path, duplicate full path, alias equals own path, duplicate alias |
 | `MJX319` | dev warning | route linter: `:` outside braces in a path or alias (`/user/:id`); parameters are `{name}`, `:` only gives a default inside braces |
+| `MJX320` | dev warning | route linter: a parameter pattern cannot be used (does not compile, `(` never closed, or `/` inside; a pattern applies to one segment) |
 | `MJX401` | thrown | token not registered (and not `@Injectable`) |
 | `MJX404` | thrown | cyclic service dependency |
 | `MJX405` | thrown | second `Application.CreateBuilder()` while an app is running (allowed once the previous app is `'disposing'`) |
