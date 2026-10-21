@@ -53,6 +53,7 @@ FNComponent(view: (props) => JSX): (props) => FragmentNode
 FragmentNode, Frame, Transport, TransportTo, ContentBody, ContentBlock, RouterView, RouterLink, Virtualization<T>
 Lazy({ caller: () => Promise<T>, options?: LazyOptions<T> }): Component      // a function, used as <Lazy …/>
 motifComponent(el, props?), motifFragment(props?), motifCompiled(contract)   // what the compiler emits (_mc / _mf / _mv); MJX121 on a contract mismatch (dev)
+motifOptions(spec)                       // Options object as is; types `this` in its methods as ComponentBase & spec (MotifOptions<T>)
 
 // ComponentBase members
 element, props, childs, parent, context, controls, bindings, class, attr, motif

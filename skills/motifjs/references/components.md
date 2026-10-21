@@ -139,7 +139,9 @@ export function Todo(props: { text: string; done?: boolean }) {
 `el` and `ctor` is copied onto a component whose own element is `el` (getters and setters are copied as
 accessors). `this` inside `view()` is the component, and `view()` returns the content placed inside `el`,
 as in a class. Always write the `el` key: it is what marks the object as a component; `el: undefined` or
-`el: null` makes it a fragment.
+`el: null` makes it a fragment. Wrap the object in `motifOptions(...)`: it returns the object unchanged and
+types `this` inside the methods as the component, so `this.class`, `this.motif`, `this.props` type-check
+under strict and complete in the editor (without it `this` is the plain object and `this.class` is TS2339).
 `ctor(props)` runs once right after creation (before `build()`), with `this` = the component; a throw
 is reported as `MJX122` and the component is still created.
 A function returning such an object works wherever a component goes: a JSX tag, a route `control`,

@@ -115,6 +115,7 @@ app.run('#app', new Counter());
 ## Two more component styles (all compile to the same core)
 
 ```tsx
+import { motifOptions } from "@motifx/core";
 // Function component: closure state, JSX return, lifecycle via props on the root element
 export function Greeting(props: { name: string }) {
   const s = reactive({ likes: 0 });
@@ -124,7 +125,7 @@ export function Greeting(props: { name: string }) {
 }
 
 // Options-API object: { el, data, view, ctor?(props) } — ctor runs once after creation, this = component
-export const MessageBox = () => ({
+export const MessageBox = () => motifOptions({
   el: 'div',
   data: reactive({ msg: 'Hello' }),
   view() { return <span onclick={() => this.data.msg = 'Clicked'}>{this.data.msg}</span>; },
