@@ -39,8 +39,10 @@ output.
   `preconfig`, `ref`, `childs`, `options`, `transition`, `key` / `indexkey` and the lifecycle hooks
   (`onConfig`, `onBuilt`, `onMounted`, …). Attributes of a plain tag are written with `attr.add` inside
   the setup, as the compiler does, not as keys of this object.
-- `motifComponent(Class, props)` constructs the class; `motifComponent(fnPart, props)` calls the function
-  and applies the framework keys of `props` (`ref`, hooks, `options`) to the root it returns;
+- `motifComponent(Class, props)` constructs the class, and the object-form keys (`preconfig`,
+  `initializeComponent`, `onMounted`, `childs`, `ref`) apply to it; `motifComponent(fnPart, props)` calls the
+  function and applies only `ref`, the fallthrough attributes (`class`, `id`, `aria-*`…), `options` and
+  `transition` to the root it returns: the hook keys do not reach that root, write them inside the function;
   `motifComponent(instance)` returns the instance as is; `motifComponent({ initializeComponent })` (an
   object with no tag) is a component **without an element**, a fragment: the holder the compiler uses for
   lists. `new Component('div', { initializeComponent })` is the same as the string form and is what the
