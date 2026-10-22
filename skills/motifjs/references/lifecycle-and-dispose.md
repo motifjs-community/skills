@@ -129,8 +129,8 @@ if (data instanceof Error || this.isDisposed) return;
 ```ts
 app.useReactiveMonitor({ enabled: true, threshold: 200, name: 'app' });
 ```
-Warns when a reactive dependency set grows past the threshold, which usually means an effect or
-binding was never released. Off by default; `configureReactivityLeakMonitor({...})` is the same switch
+Warns (`MJX507`) when the number of effects tracking one reactive field reaches the threshold (200 by
+default when enabled), which usually means an effect or binding was never released. Off by default; `configureReactivityLeakMonitor({...})` is the same switch
 without an `Application`.
 
 ### Counting live components (tests)

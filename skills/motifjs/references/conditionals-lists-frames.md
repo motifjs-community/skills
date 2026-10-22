@@ -6,14 +6,16 @@
 <p x-wait={() => !state.loggedIn}>Welcome back</p>     // waits WHILE the fn returns true
 <p x-display={() => state.loggedIn}>Welcome back</p>   // exact inverse, same machinery
 ```
-Compiled to `bindings.wait` / `bindings.display`. Works on plain DOM tags, class components and
-function components alike.
+Compiled to `bindings.wait` / `bindings.display`. Works on plain DOM tags, class components (elementless
+ones included), function components and Options components alike.
 
 Measured behaviour (`packages/tests/src/components/x-wait-semantics.test.ts`):
 
 - **Lazy build.** If the condition is `true` on first evaluation the element is never `build()`ed —
-  neither it nor its subtree enters the DOM, a placeholder is left instead. `onBuilding`/`onBuilt`/
-  `onMounted` do not fire until it first becomes visible. A panel that starts closed costs nothing.
+  neither it nor its subtree enters the DOM, a placeholder is left instead. The component object still
+  exists: a class runs its constructor and `onInitializing`/`onInitialized`/`onConfig`/`onConfigured`, a
+  function component runs its body; `view()`, `onBuilding`/`onBuilt`/`onMounted` and the subtree's setup
+  wait until it first becomes visible. A panel that starts closed builds no view until then.
 - **Instance preserved.** After the first build, toggling only hides/shows. The component is **not**
   disposed, so scroll position, form input and third-party plugin state survive. `onDisposing`/
   `onDisposed` do not fire.
@@ -22,7 +24,10 @@ Measured behaviour (`packages/tests/src/components/x-wait-semantics.test.ts`):
   `build()` returns — same as the directive. Later branch *changes* are async (the outgoing content
   is awaited-disposed first; latest navigation wins).
 
-Pair it with `options={{ hideStrategy: 'detach' }}` when the hidden subtree should leave the DOM entirely.
+A hidden element leaves the DOM with either strategy: the default puts a `<!--h-->` trace in its place,
+`options={{ hideStrategy: 'detach' }}` leaves none and re-inserts by position in the parent. Hiding fires
+`onDeactivated` on the component and its visible subtree (`onActivated` when it is shown again); bindings
+keep running while hidden, so the element comes back with current values.
 
 ## `&&` — only when you actually want construct/dispose
 
@@ -33,7 +38,8 @@ Compiled to `bindings.when`. A **new instance is created** every time the condit
 and **disposed** every time it becomes falsy. The branch is rebuilt only when the condition **value**
 changes (`Object.is`; two falsy values count as the same): `{state.n > 0 && <X/>}` keeps the same `X`
 while `n` goes 1 → 2 → 3, and `{state.user && <X/>}` rebuilds when `state.user` is replaced by
-another object.
+another object. A number condition renders nothing for `0` (no `0` text), but
+`{state.items.length && <X/>}` rebuilds `X` on every count change; write `> 0` to keep it.
 
 Choose it only when that churn is the point: a third-party plugin that must really be destroyed, or
 content too heavy to keep in memory while hidden. Otherwise `x-wait` is cheaper and more predictable.
@@ -71,7 +77,9 @@ conditional. Pass a getter and read it with the `Bind<T>` contract to keep it li
 // Badge: interface Props { count: Bind<number> }  …  <span>{() => read(this.props.count)}</span>
 ```
 
-For plain text use a getter instead: `<span>{() => state.done ? '✓' : '✗'}</span>`.
+For plain text use a getter instead: `<span>{() => state.done ? '✓' : '✗'}</span>`. It compiles to
+`bindings.ternary` with a text node per branch; the hand-written single binding is `bindings.text(fn)`,
+which sets the element's `textContent` and so removes any other children.
 
 ### Compiler restriction (important)
 
@@ -114,7 +122,8 @@ const state = reactive({ todos: [{ id: 1, title: 'Buy milk', done: false }] });
   showing that object. Array methods never copy items; write `{ ...item }` for an independent copy.
   Primitive items (`string[]`) keep
   their row when the same value stays at the same index, or anywhere when the render function takes
-  no `index` parameter.
+  no `index` parameter. An object item's row is reused when it moves, so the `index` a render function
+  receives is the position when the row was built; a sort does not update it.
 - **`key`**: still give a stable unique value; it identifies items. It does not take part in matching
   and does not change DOM reuse; a duplicate key raises the `MJX202` dev warning, and a `.map` without
   `key` raises the compiler warning `MJX003`.
@@ -122,7 +131,8 @@ const state = reactive({ todos: [{ id: 1, title: 'Buy milk', done: false }] });
 - `{state.todos.filter(t => !t.done).map(...)}` is reactive when the filter reads reactive fields.
 - `items.map(function (item) { … }, ctx)`: the second `map` argument is honoured as `this`.
 - The render function must return a component (instance, class or factory); anything else throws
-  `MJX201`.
+  `MJX201` (reported through the list effect as `MJX208`) and that update places no rows at all. To
+  skip items, filter first (`.filter(...).map(...)`) instead of returning `null`.
 
 ## `switch`-like rendering
 
@@ -153,15 +163,18 @@ In JSX write a `switch` inside a block-bodied getter; the compiler turns the `ca
 </div>
 ```
 `case` labels must be string, number or boolean **literals**. Statements before the `switch` run in
-the discriminant getter on every evaluation and the branches see those locals; statements before a
+the discriminant getter on every evaluation and the branches see those locals (read when the branch is
+built, so they do not update it while the discriminant stays the same); statements before a
 `return` inside a case run when the branch is built; fall-through (`case 'a': case 'b': return <X/>;`)
 shows `X` for `'a'` too; a branch leaving with `break` and the statements after the `switch` run on the
 default path. A branch returning `null` or `undefined` (`default: return null`, `return ok ? <X/> : null`)
-empties the slot. In a hand-written `switchCase`, `frame.navigate(null)` places nothing and leaves the
-previous content; empty the slot with `frame.flush()`. A shape the compiler cannot lower (a non-literal
-`case` label, a `return` or JSX-creating statement before the `switch`, a `break` that leaves the
-`switch`) runs as written through `bindings.method` and warns `MJX016` in development: no branch is
-kept, the content is rebuilt on every change. The same holds for `{() => { const x = …; return c ? <A/> : <B/>; }}`:
+empties the slot. Moving from one unmatched value to another keeps the default branch. In a
+hand-written `switchCase`, `frame.navigate(null)` places nothing and leaves the previous content; empty
+the slot with `frame.flush()`. A shape the compiler cannot lower (a non-literal or repeated `case`
+label, a second `default` or `switch`, a `return`, JSX-creating statement or class declaration before
+the `switch`, a `break`/`continue` that is labeled or not the last statement of its case) runs as
+written through `bindings.method` and the compiler warns `MJX016`: no branch is kept, the content is
+rebuilt on every change. The same holds for `{() => { const x = …; return c ? <A/> : <B/>; }}`:
 the locals are kept and the condition getter runs them.
 
 ## `Frame` — a slot you navigate programmatically

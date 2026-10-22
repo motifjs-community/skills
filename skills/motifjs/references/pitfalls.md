@@ -25,52 +25,56 @@
 1. **Block-arrow + local + conditional in child position**: `{() => { const x = …; return c ? <A/> : <B/>; }}` throws
    `ReferenceError: x is not defined` at runtime. Use expression-bodied arrows or a method.
 2. **`class X extends Component` without a generic and without `super('tag')`** becomes a fragment;
-   attributes and DOM events written on the component tag are lost silently, and a wrapper returned from
+   attributes written on the component tag are lost silently (DOM events on it listen on the content
+   elements), and a wrapper returned from
    `view()` is a child, not the component's element. Declare `Component<HTMLDivElement>`. With an element
    declared, a wrapper returned from `view()` is a second element inside it (`<div><div>…</div></div>`):
    configure the component's own element in `onConfigured` and return only the content.
-3. Files with `//useReact` or `//useVue` are skipped; make sure no stray marker exists.
-4. Only `.jsx .tsx .aio .mjsx .mtsx` are compiled as JSX; JSX inside `.ts` is not. In `.ts`/`.mts`/`.cts` files
+3. Only `.jsx .tsx .aio .mjsx .mtsx` are compiled as JSX; JSX inside `.ts` is not. In `.ts`/`.mts`/`.cts` files
    the plugin still injects `static elementTag` for a `Component<HTMLDivElement>` class, so the class has its own
    element there too.
-5. `@Injectable` is a standard decorator; the Vite plugin lowers it in the JSX files it compiles and in
+4. `@Injectable` is a standard decorator; the Vite plugin lowers it in the JSX files it compiles and in
    `.ts`/`.mts`/`.cts`/`.js`/`.mjs`/`.cjs` files, not under `node_modules` or in `.d.ts` files; a `.ts`/`.js`
    file whose nearest tsconfig sets `experimentalDecorators: true` is left to esbuild's legacy transform. Only the
    registration is runtime: the decorator records the class when the module is evaluated and
    `builder.build()` registers it (see di.md).
-6. **`childs` is a reserved name in child position.** `{this.childs}`, `{props.childs}`, `{childs}`
+5. **`childs` is a reserved name in child position.** `{this.childs}`, `{props.childs}`, `{childs}`
    compile to `controls.add(...)` (content slot), never to a text binding — the same is true for
-   `{[compA, compB]}`. `{() => this.childs}` goes through a `Frame` and is the form to use when the
-   content must swap later. Only an exact `childs` match is special: `{this.childsCount}` and
+   `{[compA, compB]}`. `{() => this.childs}` goes through a `Frame`, but `this.childs` is a plain
+   array given once at setup: the getter re-runs only when a reactive value read inside changes, so
+   assigning or pushing to `this.childs` does not swap the slot. Only an exact `childs` match is special: `{this.childsCount}` and
    `{this['childs']}` stay text bindings.
-7. **`{a ?? b}` / `{a || b}`** compile to `bindings.method(() => a ?? b)`: left when present, otherwise
+6. **`{a ?? b}` / `{a || b}`** compile to `bindings.method(() => a ?? b)`: left when present, otherwise
    right (the right side may be JSX); reactive. `{a && <X/>}` is `bindings.when`.
-8. **`{this.method(x)}` (member call)** goes through `bindings.method`: a returned component is
+7. **`{this.method(x)}` (member call)** goes through `bindings.method`: a returned component is
    inserted (in a `Frame`, re-evaluated when reactive reads change), a string/number becomes reactive
    text; a boolean is text too (`false` prints `false`). The function runs once per change, and the result may switch between text and a component
    in place; `null` in place of a component empties the spot. `{helper(x)}` (plain identifier call) is inserted once, statically.
-9. **`.map` on a non-identifier source** — `{[X].map(...)}`, `{(a ? xs : ys).map(...)}` — works
+8. **`.map` on a non-identifier source** — `{[X].map(...)}`, `{(a ? xs : ys).map(...)}` — works
    (the source is wrapped in a getter). Named sources get a null-guard chain.
-10. **SVG namespace**: every SVG tag (`g`, `path`, `circle`, …) is created with `createElementNS`,
+9. **SVG namespace**: every SVG tag (`g`, `path`, `circle`, …) is created with `createElementNS`,
    also when returned from a separate helper (`const icon = () => <g><path/></g>`). Tags that exist
    in both HTML and SVG (`a`, `title`, `style`, `script`) are SVG only under an `<svg>` ancestor in
    the same JSX tree; `<foreignObject>` switches back to HTML.
-11. **Lowercase tag = local variable of the same name.** If a lowercase JSX tag matches a local
+10. **Lowercase tag = local variable of the same name.** If a lowercase JSX tag matches a local
    variable/parameter in scope (`(content) => <div><content></content></div>`), the compiler inserts
    that variable as a component instead of creating an element. This is how `Virtualization`'s
    `mainTemplate` slot works; `{content}` there would be a text binding (`[object Object]`). Avoid
    naming locals after real HTML tags (`const div = ...`, `const input = ...`) inside components that
    render those tags.
-12. **`x-style` equals `style`** (compiles to `sender.style(...)`, getter live). A style getter
+11. **`x-style` equals `style`** (compiles to `sender.style(...)`, getter live). A style getter
    re-applies on change and clears keys it stops returning.
-13. **`on:name` / `on-name` / `on_name` handlers follow the `motif.on` arity rule**: the handler is
+12. **`on:name` / `on-name` / `on_name` handlers follow the `motif.on` arity rule**: the handler is
    passed as is, so `fn.length <= 1` → `fn(event)`, otherwise `fn(sender, event)`. `fn.length` stops
    at the first default-valued or rest parameter: `(...a) => …` counts 0 and receives only the event.
    Only the prefix is stripped from the name: `on-my-event` → `my-event`, `on_my_event` → `my_event`.
-14. **`ref={this.x}` / `ref={name}` is resolved by the compiler.** A method, a function-valued field
+13. **`ref={this.x}` / `ref={name}` is resolved by the compiler.** A method, a function-valued field
    or a local function is called with the component; a declared plain field or an uninitialised variable
    is assigned. When the compiler cannot tell (undeclared or inherited member, import, parameter,
    `props.x`, function-typed field, getter) the runtime calls it if it holds a function, else assigns.
+   For an imported function the generated code still contains an assignment to the import: the dev
+   server runs it, but `vite build` (Rollup) stops with "Illegal reassignment of import"; write
+   `ref={(s) => importedFn(s)}`.
 
 ## Runtime quirks
 
@@ -159,8 +163,12 @@
   `super.<name>(...)`. TypeScript reports only clearly incompatible types (`style = 'red'`); it
   misses `any` fields, compatible-signature methods (`build() {}` leaves the component empty, a
   page's `dispose()` without `super` is never torn down on navigation, a parameterless `style()`
-  drops the tag's `style`). The `is…` flags and `motif` are accessors, so redeclaring one as a
-  field (`declare` included) is a TS2610 error. The compiler warns `MJX015` at build time for an
+  drops the tag's `style`). The accessors `motif`, `controls`, `class`, `attr`, `bindings`,
+  `context`, `siblings`, `serviceProvider`, `isWait` and the `is…` flags cannot be redeclared as a field
+  (`declare` included): TS2610. An overridden `dispose()` runs only when that component's own `dispose()`
+  is called (by hand, `controls.remove`, `controls.clear`); a component disposed together with its parent
+  does not get the call, only `onDisposing`/`onDisposed` and `motif.setDisposable(...)` registrations run,
+  so put teardown there. The compiler warns `MJX015` at build time for an
   override that skips `super` on any path (`if (x) return;`, one-branch `if`, loop, `catch`,
   callback), in `.ts`/`.js` files too; only `if (this.isBuilt|isDisposed|isWait) return;` in
   `build` and `if (this.isDisposed) return;` in `dispose` are exempt. In development mode `MJX128` reports, once per class,
@@ -171,7 +179,8 @@
   subclass may use those names for its own members.
 - **Reach for `x-wait`/`x-display` before `{cond && <X/>}`.** The directive keeps the instance and
   swaps a `<!--h-->` placeholder, and when the condition starts hidden the element is never built at
-  all (subtree included, lifecycle hooks silent). `{cond && <X/>}` constructs a new instance on every
+  all (subtree included; `view()` and the build hooks wait, while a class still runs its constructor and
+  config hooks). `{cond && <X/>}` constructs a new instance on every
   show and disposes it on every hide — correct only when that churn is what you want. `&&` and
   ternary branches are rebuilt only when the condition value changes, so a plain-expression component
   prop inside a branch (`<Badge count={state.n}/>`) is a snapshot; pass `count={() => state.n}` and
@@ -184,15 +193,25 @@
 - **Short-circuit inside a reactive getter loses dependencies.** `arr.some(...)`, `every`, `a || b` stop
   reading once the answer is known, so the binding never subscribes to the rest. Loop over everything
   and accumulate instead.
+- **A class with `#private` fields does not survive `reactive()`.** Getters and methods called through
+  the proxy get the proxy as `this`, so one that touches a `#private` field throws `TypeError`, whether the
+  instance is wrapped directly or stored in a reactive field. Keep such an instance out of reactive state
+  and hold its reactive data in a `reactive({ … })` field; a TypeScript `private` field is an ordinary
+  field and works.
 - **`untracked(fn)`** reads without creating dependencies — use it when an effect
   writes to a store it also reads, or when a debounced async effect must consult sync state.
 - **Template/slot props** (`<Card headerTemplate={<h1/>}/>` read as `{props.headerTemplate}`) work
   directly — no `{() => ...}` needed and no component-vs-data annotation. But the placement is decided
-  once, in the parent's `initializeComponent`: a template that is `null` then and assigned later needs the getter form
-  `{() => props.headerTemplate}` (a `Frame` slot); the direct form then writes nothing and warns
-  (`MJX204`).
+  once, in the parent's `initializeComponent`, and props are a plain object taken then: a template that is
+  `null` at that time and assigned later reaches neither the direct form (it writes nothing and warns
+  `MJX204`) nor `{() => props.headerTemplate}` (nothing reactive is read inside). The parent passes a
+  template that changes through a ternary or a getter, and the child declares it `Bind<ComponentBase | null>`
+  and reads it with `{() => read(props.headerTemplate)}` (a `Frame` slot).
 - A component callback prop whose name matches a **known DOM event** (`onChange`, `onInput`, `onSelect`,
-  `onToggle`, `onResize`…) is consumed as that DOM listener and does **not** reach `this.props`. Name callbacks after
+  `onToggle`, `onResize`, `onSearch`…) is consumed as that DOM listener and does **not** reach `this.props`.
+  A name the compiler does not know as a DOM event (`onmouseenter`, `onpointerdown`, `onfocusin`,
+  `ontransitionend`) is the opposite: no listener, the value stays a prop without a warning; listen with
+  `on:mouseenter={…}`. Name callbacks after
   domain events instead: `onValueChange`, `onAdd`, `onDismiss`.
 - `Application.CreateBuilder()` may be called once per page; a second call while an app is running throws
   `MJX405` (it is allowed once `app.dispose()` has been called, even without `await`). Call `rebuild()` for
@@ -204,11 +223,13 @@
   `motif.setDisposable`) their unsubscribe.
 - Raw `effect()` outside components never stops by itself.
 - **An effect must not write a value it also reads.** `state.n++` inside an effect is a read *and* a
-  write, so the effect retriggers itself. Wrap bookkeeping writes (counters, logs) in `untracked(...)`.
+  write, so the effect retriggers itself; so does `list.sort()`, which reads and writes the array in place.
+  Wrap bookkeeping writes (counters, logs) and in-place sorts in `untracked(...)`, or sort a copy.
   The framework bounds this: an effect that runs 50 times in one flush is skipped for the rest of that
   flush and an `MJX203` dev warning names it; other queued effects are unaffected.
 - **Chained state settles in the same microtask.** Effect A writing state that effect B reads is
-  supported and order-independent; one `await tick()` is enough.
+  supported; the final state does not depend on creation order and one `await tick()` is enough. An effect
+  that also reads such a value can run twice in that microtask, and its first run may see the old value.
 - An effect that throws does not abort the rest of the flush; the error is reported as `MJX208` and reaches
   `errorHandler.addListener(fn)` as `MotifError` (original error in `cause`). The throwing run has no value:
   `effect(getter, onValue)` does not call `onValue`, and a `when`/`ternary`/`switchCase` branch keeps its content.

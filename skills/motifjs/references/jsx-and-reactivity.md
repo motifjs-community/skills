@@ -3,23 +3,29 @@
 ## Reactive primitives (`@motifx/core` exports)
 
 ```ts
-import { reactive, useModel, createSignal, createComputed, effect, untracked, deepClone, clearModel } from '@motifx/core';
+import { reactive, useModel, createSignal, createComputed, createLazyComputed, effect, untracked, deepClone, clearModel, read, toGetter } from '@motifx/core';
 ```
 
 | API | Notes |
 |---|---|
-| `reactive(obj)` / `useModel(obj)` | Deep proxy. Read = tracked, write = triggers. Nested objects and arrays (`push`, `splice`, sort, index assignment) are tracked, and so are `Map`, `Set`, `WeakMap`, `WeakSet` (see Reactive collections). `Date`, `RegExp` and frozen objects are returned as is, never proxied. A `RegExp` works normally inside a reactive object (`test`, `exec`, `replace`); a new pattern is written as a new `RegExp` to the field, which triggers. `Date` and frozen objects are not tracked inside (write a new reference). A function-valued field is returned as the function itself; a binding that ends up with a function value calls it (unbound, so no `this`) — `{state.fn}`, `bindings.add(prop, state, 'fn')`, attribute getters — but your own code must call it: `() => state.fn() + '!'`. |
-| `createSignal(v)` / `new Signal(v, equals?)` / `Signal.create(v, equals?)` | `.value` get/set, `.peek()`, `.update(fn)`, `.mutate(fn)`, `.notify()`, `.asReadonly()`, `.dispose()`. |
-| `createComputed(fn)` | Eager, cached derived value: computed at creation and recomputed on dependency change even when unread; `.value`, `.peek()`, `.dispose()`. |
-| `createLazyComputed(fn)` | Lazy derived value: nothing is computed until `.value` is read; a dependency change only marks it dirty (synchronously) and wakes its readers; `.value`, `.peek()`, `.isDirty`, `.dispose()`. |
-| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking; `value` is typed from `fn`'s return type. If `fn` throws, `onValueChanged` is not called for that run (`MJX208` is reported, tracking continues). Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
-| `untracked(fn)` | Reads inside are not tracked by the enclosing effect; returns `fn`'s value. Nested `effect()` calls still track normally. |
-| `deepClone(v)`, `clearModel(m)` | Utilities. |
-| `asyncTracking` | `capture()`/`suspend()`/`resume()`/`end()`; emitted by the compiler around `await` in a `Virtualization` `dataRequest` so reads after `await` stay tracked. Not needed in app code. |
+| `reactive(obj)` / `useModel(obj)` | Deep proxy over the object itself (no copy). Read = tracked, write = triggers. Nested objects and arrays (`push`, `splice`, sort, index assignment, `length = 0`) are tracked, and so are `Map`, `Set`, `WeakMap`, `WeakSet` (see Reactive collections). The same object gives the same proxy and a proxy passed in is returned as is, until `clearModel(obj)` drops the entry (then `reactive(obj)` gives a new proxy). A number, string or boolean is boxed: `reactive('')` returns a `{ value: '' }` proxy, typed `{ value: T }`. Component, `Application` and `ServiceProvider` instances and `app.router` are returned as is, also when stored in a reactive field. `Date`, `RegExp` and non-extensible (frozen, sealed) objects are returned as is, never proxied. A `RegExp` works normally inside a reactive object (`test`, `exec`, `replace`); a new pattern is written as a new `RegExp` to the field, which triggers. `Date` and frozen objects are not tracked inside (write a new reference). Getters and methods called through the proxy get the proxy as `this`, so a class whose getter or method touches a `#private` field throws `TypeError` once wrapped, directly or as a value inside a reactive object; keep that class's reactive state in a `reactive({ … })` field instead (a TypeScript `private` field is an ordinary field and works). A function-valued field is returned as the function itself; a binding that ends up with a function value calls it: `{state.fn}`, `bindings.add(prop, state, 'fn')` and attribute getters call it unbound (no `this`), `x-text={state.fn}` calls it on `state`. A method that uses `this` goes into a slot as `{() => state.fn()}`, and your own code must call it: `() => state.fn() + '!'`. |
+| `createSignal(v)` / `new Signal(v, equals?)` / `Signal.create(v, equals?)` | `.value` get/set (a write that `equals`, default `Object.is`, finds equal triggers nothing), `.peek()`, `.update(fn)`, `.mutate(fn)` and `.notify()` (both trigger even when the reference is unchanged), `.asReadonly()` (`value`, `peek()`), `.dispose()` (writes become no-ops, reads return the last value), `valueOf()` / `toString()` (tracked reads, so `` `${sig}` `` is tracked). |
+| `createComputed(fn)` | Eager, cached derived value: computed at creation; on a dependency change it recomputes on the next microtask even when unread, and wakes its readers only when the value changed. `.value` returns the cached value without computing, so a synchronous read right after a write gives the previous value. Writes in one synchronous block cost one recomputation. `.value`, `.peek()`, `.dispose()` (stops recomputing, keeps the last value). |
+| `createLazyComputed(fn)` | Lazy derived value: nothing is computed until `.value` is read; a dependency change only marks it dirty (synchronously) and wakes its readers, even when the value will turn out equal; any number of writes between two reads costs one computation. `.value`, `.peek()` (computes when dirty, untracked), `.isDirty`, `.dispose()` (stops tracking; a dirty value is computed once more on the next read, then the last value is returned). With a `createComputed` in the chain the lazy value is fresh only after the flush. Choose `createComputed` for a value read all the time, `createLazyComputed` for an expensive value read less often than it is written. |
+| `effect(fn, onValueChanged?)` | Runs immediately and again on every change of what it read. `onValueChanged(value)` receives `fn`'s return value after every run, outside `fn`'s tracking; `value` is typed from `fn`'s return type. If `fn` throws, `onValueChanged` is not called for that run (`MJX208` is reported, tracking continues). The first `onValueChanged` call runs synchronously inside `effect(...)`; when the effect is created while another effect is running, the reads of that first call are recorded on the outer effect. Returns `stop()`. Inside components prefer `this.bindings.watch(fn)`. |
+| `untracked(fn)` | Reads inside are not tracked by the enclosing effect; writes inside still trigger their readers; returns `fn`'s value. Nested `effect()` calls still track normally. |
+| `deepClone(v)` | Non-reactive deep copy of the raw value: plain objects (own enumerable keys), arrays, `Map` and `Set` are copied deeply; `Date` and `RegExp` become new instances; a class instance keeps its prototype, so its getters and methods work on the copy; cycles are reproduced; functions, `WeakMap` and `WeakSet` are shared; DOM nodes are copied with `cloneNode(true)`; boxed primitives become primitives. |
+| `clearModel(m)` | Drops the proxy entries of the object and of its already proxied nested objects; values, bindings and effects stay. Afterwards `reactive(m)` gives a new proxy, and writes through it still update the existing bindings. Writes through a proxy taken before the call change the value without notifying; nested objects read from that old proxy come out as new proxies that do notify. |
+| `read(v)` / `toGetter(v)` | `Bind<T>` is `T \| (() => T)`: `read` calls a function and returns anything else as is, `toGetter` always returns a getter. The contract for props that may arrive as getters (see the ternary rule under Attributes). |
+| `configureReactivityLeakMonitor({ enabled?, threshold?, name? })` | Dev leak monitor: warns `MJX507` when the number of effects tracking one field reaches `threshold` (200 by default when enabled); `app.useReactiveMonitor(...)` is the same switch. |
+| `asyncTracking` | `capture()`/`suspend()`/`resume()`/`end()`; emitted by the compiler around each `await` of an `async` function written inline on `<Virtualization dataRequest={…}>`, so reads after `await` stay tracked. A function passed by name (`dataRequest={this.loadPage}`) or one that is not `async` is not wrapped, and its reads after `await` are not tracked. Not needed in app code. |
 
-Effects flush on a microtask in rounds. An effect that runs more than 50 times in one flush (it writes
-what it reads, e.g. `state.n++`) is skipped for the rest of that flush and raises the `MJX203` dev warning;
-wrap the write in `untracked(...)`.
+Effects flush on a microtask in rounds; writes in one synchronous block run each queued effect once. An
+effect that also reads a value written in the same flush by another effect or by a `createComputed` runs
+again in the next round of that microtask: depending on creation order its first run may see the old value,
+its last run sees the current ones, and the final state does not depend on creation order. An effect that
+runs 50 times in one flush (it writes what it reads, e.g. `state.n++`) is skipped for the rest of that flush
+and raises the `MJX203` dev warning; wrap the write in `untracked(...)`.
 
 Module-level stores are idiomatic:
 
@@ -58,7 +64,7 @@ state.users.get(u.id)!.name = 'Grace';           // values read out are reactive
 | `{"text"}` | Static. |
 | `{localVar}` | Guarded getter `bindings.add('textContent', () => …)`: a string/number local is written once (nothing reactive is read); a local holding a function is called inside the binding and stays live; `null`/`undefined` gives empty text; a component (or array of them) is placed with `controls.add`. |
 | `{fn()}` | Plain call: `controls.add(fn())`, evaluated once; the one-shot form. |
-| `{state.field}` | One-way binding to that field (`bindings.add('textContent', state, 'field')`). |
+| `{state.field}` | One-way binding to that field (`bindings.add('textContent', state, 'field')`). Only the last field is tracked; the object before it is read once at setup, so `{editor.selected.title}` follows that note's title but stays on the old note when `editor.selected` changes; `{() => editor.selected?.title}` tracks the whole path. A path with `?.` is wrapped in a getter and stays live. |
 | `{() => expr}` | Reactive getter; re-evaluated when any reactive read inside changes. Most flexible. |
 | `` {`Count: ${state.n}`} `` | Template literal is wrapped in a getter → reactive. |
 | `{cond && <X/>}` | Conditional (bindings.when) — **constructs and disposes on every toggle**; rebuilt only when the condition value changes. Prefer `x-wait` (see below). |
@@ -84,7 +90,8 @@ reactive single-content slot.
 ```
 
 Rule: **a function value = reactive binding; anything else = set once.** On a plain DOM tag the
-compiler wraps an expression that reads a variable (`a + b`, `!state.open`, `state.url`) in a getter,
+compiler wraps an expression that reads a variable (`a + b`, `!state.open`, `state.url`, a template literal,
+a `?.` chain) in a getter,
 so it stays live; a plain call (`data-n={fmt(x)}`) is evaluated once; a bare identifier (`attr={v}`) is
 passed as is (live only when it holds a function); literal values (numbers, negative
 numbers, `true`/`false`, `null`, arrays, `new X()`) are passed to `attr.add` as they are.
@@ -113,7 +120,12 @@ component is to declare that prop as `Bind<T>` and read it with `read()` / `toGe
 that declares a plain type and passes the prop straight through gets a function at runtime (e.g. an
 `Icon` that looks up `name` directly receives `() => …` from `<Icon name={ok ? 'check' : 'error'}/>`).
 A valueless attribute on a component tag (`<Comp flag />`) passes `flag: true`. `npx motif-lint`
-flags a ternary on a prop whose declared type is not `Bind<T>` (`MJX005`).
+flags a ternary on a prop whose declared type is not `Bind<T>` (`MJX005`). On a component tag the other
+expressions are not wrapped (`{p.a}`, `{f()}`, `{a && b}` pass the value taken at setup), while on a plain
+DOM tag `{p.a}` and `{a && b}` are wrapped and `{f()}` runs once. A ternary in a handler position
+(`onclick={a ? save : edit}`, `on:click`, `onclick:once`, also on a component tag) is wrapped too, but nothing
+calls the handler it returns: the getter becomes the listener, a click only returns the chosen handler, and no
+warning appears. Put the condition inside the handler: `onclick={() => (a ? save() : edit())}`.
 
 **When in doubt, do not guess the lowering — print it.** `npx motif-explain file.tsx` lists every
 JSX expression with the real generated call (`sender.bindings.add("textContent", state, "ad")`,
@@ -150,9 +162,12 @@ are written the same way:
 ```
 
 The decision is made **once, when the parent's `initializeComponent` places it**: the placed component's own bindings stay live,
-but reassigning the prop later does not swap the DOM. **If the template can change (starts `null`,
-gets swapped at runtime), write a getter** — `{() => props.headerTemplate}` — which creates a `Frame`
-slot and renavigates on every change. If a component reaches a text binding anyway, nothing is written
+but reassigning the prop later does not swap the DOM. Props are a plain object taken when the tag is set up,
+so `{() => props.headerTemplate}` does not track a later assignment either (nothing reactive is read inside).
+**If the template can change (starts `null`, gets swapped at runtime)**, the parent passes it through a
+ternary or a getter (`headerTemplate={state.editing ? <nav/> : null}`; a prop ternary is always a getter),
+and the child declares the prop `Bind<ComponentBase | null>` and reads it inside a getter with `read()`:
+`{() => read(props.headerTemplate)}` creates a `Frame` slot and places the current result on every change. If a component reaches a text binding anyway, nothing is written
 and an `MJX204` dev warning names the getter fix.
 
 ### Spread `{...props}`
@@ -192,6 +207,12 @@ while the value is truthy and removed otherwise. Literals (`true`, `false`, `''`
 other value is wrapped in a getter and stays live, inside an array too:
 `class={{ row: true, danger: state.sel === id }}`, `class={['card', { active: () => state.on }]}`.
 
+On a component tag only a ternary is wrapped: an object, a template literal or `class={note.cls}` is
+evaluated once when the tag is set up and applied to the component's element with `class.add`; pass
+`{ selected: () => note.pinned }` or `class={() => …}` for a live class there. The tag's `class` is applied in
+the constructor and the component's own classes later, so `<NoteBadge class="small" />` whose `onConfigured`
+adds `badge` renders `class="small badge"`.
+
 ### `style`
 
 String, object (`{ width: '33%' }`) or getter returning either. A getter is **live**: keys it stops
@@ -224,8 +245,9 @@ the call runs one microtask later. On a component tag these names are ordinary p
 An array value is spread into arguments (`setSelectionRange={[0, 5]}` or `setSelectionRange={() => [0, 5]}`
 → `setSelectionRange(0, 5)`); an object value is passed as one argument (`scrollTo={{ top: 0 }}`).
 Literal values call the method too: `showModal={true}`, `focus={true}`, and a valueless `<dialog show />`
-counts as `true`. If the element has no such
-method, the value is written as a plain attribute.
+counts as `true`. Only the names listed here are called: any other name, also one that is an element method
+(`setCustomValidity`, `stepUp` …), is written as a plain attribute, and so is a listed name the element does
+not have.
 
 ### Special `x-` props
 
@@ -233,7 +255,7 @@ method, the value is written as a plain attribute.
 |---|---|
 | `ref={(s) => ...}` / `ref={this.x}` / `x-ref` | Capture the tag's component instance (callback, or a member/name that is called when it is a function and assigned otherwise; every tag, exactly once). `ref` and `x-ref` on one tag both run, in source order. Applied only to the component it was given to (a function component's returned root); never present in `props` / `this.props`, so `{...props}` does not forward it. Use a separately named prop (`inputRef`) for an inner element. |
 | `x-html={() => html}` | Reactive `innerHTML` (unsafe with untrusted input). |
-| `x-text`, `x-value`, `x-watch`, `x-model` | Compile to `sender.bindings.text(…)` / `.value(…)` / `.watch(…)` / `.model(…)`. `x-model={() => s.q}` (or `x-model={s.q}`) becomes `bindings.model(() => s.q, v => { s.q = v })`: two-way, and the owner object is read again on every write. A value that is not a member access binds one-way (events-and-forms.md). |
+| `x-text`, `x-value`, `x-watch`, `x-model` | Compile to `sender.bindings.text(…)` / `.value(…)` / `.watch(…)` / `.model(…)`. `x-text` sets the element's whole `textContent`: on its first change it removes the element's other children, so write `{() => text}` as a child for live text next to siblings. `x-model={() => s.q}` (or `x-model={s.q}`) becomes `bindings.model(() => s.q, v => { s.q = v })`: two-way, and the owner object is read again on every write. A value that is not a member access binds one-way (events-and-forms.md). |
 | `x-inject={v}` | Passed as the prop `inject` (no attribute on a plain DOM tag). |
 | `x-foo` (unknown) | Passed as the prop `onfoo`; compiler warning `MJX007`. `x-bind`, `x-focus`, `x-list`, `x-loop`, `x-effect`, `x-reload`, `x-interrupt`, `x-to` are compile errors (`MJX006`). |
 | `x-wait={() => bool}` | While `true`, the component is held back from the DOM. |
@@ -243,7 +265,7 @@ method, the value is written as a plain attribute.
 | `key` | Identifies a list item; duplicates raise the `MJX202` dev warning. Rows are matched by the item object, so `key` does not change DOM reuse. |
 | `transition="fade"` or `transition={{...}}` | Enter/leave CSS classes (styling-and-transitions.md). No attribute is written, also on plain DOM tags. |
 | `options={{ hideStrategy, disableDisposal }}` | Copied into the tag's `motif.options` (plain DOM tags and component tags); no attribute is written. |
-| `initializeComponent={(s) => ...}` | Called once with the tag's component as `sender`, during build right before `view()`; good place for `s.bindings.*` calls. Same meaning and timing on plain DOM tags, class component tags and function component tags (the returned root). The compiler emits its own `initializeComponent` for the tag's attributes, events, directives and children; both run: the component's method, then the tag's, then the compiled one. With JSX you rarely write it; it is mainly for building components without JSX. |
+| `initializeComponent={(s) => ...}` | Called once with the tag's component as `sender`, during build right before `view()` (a tag held by `x-wait` runs it on its first show); good place for `s.bindings.*` calls. Same meaning and timing on plain DOM tags, class component tags and function component tags (the returned root). The compiler emits its own `initializeComponent` for the tag's attributes, events, directives and children; both run: the component's method, then the tag's, then the compiled one. With JSX you rarely write it; it is mainly for building components without JSX. |
 
 On every directive (including `x-wait`/`x-display`) a variable or member holding a function is called as the
 getter, with `this` for a method: `x-display={isAuthor}`, `x-wait={this.isLoading}`, `x-text={this.label}`.
@@ -254,7 +276,7 @@ The compiler generates these; you can call them directly in `initializeComponent
 
 ```ts
 add(prop, source)                        // bind DOM property `prop` to reactive object/getter
-add(prop, source, member)                // bind to source[member]
+add(prop, source, member)                // bind to source[member]; member may be a dotted path ('author.name')
 add(prop, source, member, formatString)
 add(prop, source, member, formatString, formatInfo)   // formatInfo: { locale?, currency? }
 add(binding)                             // an object with `propertyName` is registered as is
@@ -268,7 +290,7 @@ loop(...)                                // alias of list
 switchCase(() => key, { a: frame => ..., b: frame => ... }, frame => defaultCase)
 method(() => any)                        // string/number/boolean/bigint → text; component → Frame slot;
                                          // null/undefined in slot mode empties it (old component disposed)
-watch(() => void)                        // side-effect, auto-stopped on dispose
+watch(() => void)                        // side-effect; first run synchronously at registration; auto-stopped on dispose
 model(getter, setter)                    // two-way through functions; what `x-model` compiles to
 model(source, member, format?, formatInfo?) // two-way (checked/value/src chosen by element type)
 model(binding)                           // any single object argument is taken as an IBaseBinding;
@@ -283,7 +305,7 @@ items                                    // copy of the registered bindings
 
 `add`, `html`, `list`/`loop`, `model`, `wait`, `display` register a binding and return it; `text` and
 `value` register one and return nothing. `clear` (and `remove` with the returned binding) stops them. `when`, `ternary` and `switchCase` return `null`, `method` and `watch`
-return nothing; none of them is registered, so `remove`/`clear` cannot stop them. All five stop when the
+return nothing; none of them is registered, so `remove`/`clear` cannot stop them, while `reActivateAll()` restarts them. All five stop when the
 component is disposed; the inner condition of a nested ternary also stops when the outer branch switches away.
 
 A `Binding` (returned by `add`/`model`) has `converter` (applied to the value read, after
@@ -291,7 +313,8 @@ A `Binding` (returned by `add`/`model`) has `converter` (applied to the value re
 (the write function of the getter/setter form) and `formatInfo`; set them on the returned binding before
 the component is built. `updateMode` is not read by any binding.
 
-`formatString` codes: on numbers `C` → currency, `P` → percent, `N`/`N2` → fixed decimals (default 2);
+`formatString` codes: on numbers `C` → currency, `P` → percent (the value is multiplied by 100: `0.25` →
+`25%`), `N`/`N2` → fixed decimals (default 2), the number codes also in lower case;
 on `Date` values `d` → `toLocaleDateString`, `t` → `toLocaleTimeString`; any other value is written
 with `toString()`. `null`/`undefined` are not formatted. Locale and currency come from the binding's
 `formatInfo` (`{ locale?: string | string[], currency?: string }`):
@@ -313,11 +336,14 @@ data.message = 'World'; // textContent updates after a microtask
 
 Prefer reactive data (`reactive(obj)`). For plain objects mutated in place, `this.setState()` refreshes
 the subtree: it calls `setState()` on each child, then `bindings.reActivateAll()`, which re-runs every
-registered binding of the component (text, attribute, class and style getters, `model`, `wait`/`display`)
-and makes each list dispose and rebuild all its rows (`ListBinding.reActivate`). `reState()` does the
-same with this component first, then its children. `when`, `ternary`, `switchCase`, `method` and `watch`
-are not registered bindings and are not re-run. A binding that throws while refreshing is reported as
-`MJX208` and the remaining ones still run.
+registered binding of the component (text and attribute paths, class and style getters, `x-text`, `x-html`,
+`value`/`checked`/`x-model`, `wait`/`display`; each list disposes and rebuilds all its rows) and restarts
+`when`, `ternary`, `switchCase`, `method` (`{() => …}`, template literals, member calls) and `watch`. A
+branch is rebuilt only when its condition value changed. `reState()` does the same with this component
+first, then its children. A path written directly (`{i18n.dict.title}`, `bindings.add('textContent', dict,
+'title')`) keeps the object it read at build time, so replacing that object leaves the text on the old one;
+a getter slot (`{() => i18n.dict.title}`) reads the new one. A binding that throws while refreshing is
+reported as `MJX208` and the remaining ones still run.
 
 ## Gotchas
 
@@ -325,7 +351,9 @@ are not registered bindings and are not re-run. A binding that throws while refr
 - Destructuring a reactive object (`const { count } = state`) loses reactivity.
 - Array mutators (`push`, `pop`, `shift`, `unshift`, `splice`, `reverse`) do not track their own internal
   reads, so `state.items.push(x)` inside an effect does not subscribe the effect to the array (an explicit
-  read such as `state.items.length` still does).
+  read such as `state.items.length` still does). `sort` is not one of them: it reads and writes the array in
+  place, so `state.items.sort()` inside an effect retriggers the effect until `MJX203`; sort inside
+  `untracked(...)` or sort a copy (`[...state.items].sort()`).
 - `createComputed` recomputes on the next microtask, so a synchronous read right after a write may see
   the previous value; `createLazyComputed` is marked dirty synchronously and recomputes on read.
 - Replacing a whole array (`state.items = newArr`) is fine: rows are matched by item object identity,

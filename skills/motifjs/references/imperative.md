@@ -87,8 +87,9 @@ compiled with plain `tsc`), write `static elementTag = 'div'` or call `super('di
 ```ts
 // 1. No element declared (the starter's choice): the component is a fragment and view() returns its
 //    content. The main below is the first child, not the component's element: this.element is a comment
-//    marker; this.class / this.attr / this.motif.on and the tag's class / id / onclick reach nothing
-//    (silently); x-display and motif.hide() hide the children. Configure main itself.
+//    marker; this.class / this.attr and the tag's class / id reach nothing (silently); this.motif.on and
+//    the tag's onclick listen on the content elements; x-display and motif.hide() hide the children.
+//    Configure main itself.
 export default class SettingsPage extends Component {
   settings = this.getService(SettingsService)!;
 

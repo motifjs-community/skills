@@ -15,7 +15,15 @@
   `onSelect`, `onReset`, `onContextMenu` …) is bound as a DOM listener on the component's own element and
   never reaches `this.props` (the compiler warns `MJX002` for the camelCase spelling). On a fragment
   component (no element) the listener listens on the content elements: every top-level child element, nested fragments included, later children too; `:self`, `:once` and `off` cover all of them. Name callback props
-  so they do not collide: `onValueChange`, `onConfirm`.
+  so they do not collide: `onValueChange`, `onConfirm`. A name the compiler does not know as a DOM event
+  (`onmouseenter`, `onpointer…`, `ontouch…`, `onfocusin`, `onanimation…`, `ontransition…`) creates no listener
+  on a component tag: the value passes as an ordinary prop, without a warning. Listen to such an event on the
+  component's element with `on:mouseenter={…}`; a lowercase known name (`<Button onclick={…}>`) is a
+  deliberate DOM listener and does not warn.
+- A ternary in a handler position (`onclick={a ? save : edit}`, `on:click`, `onclick:once`, also on a
+  component tag) runs no handler: the compiler wraps it in a getter, the getter becomes the listener and the
+  handler it returns is not called, with no warning. Put the condition inside the handler:
+  `onclick={() => (a ? save() : edit())}`.
 - A handler that throws, or an async handler whose promise rejects, is reported as `MotifError` `MJX123`
   (`The '<event>' event handler threw.`, original error in `cause`) through `errorHandler`: logged to the
   console in production too (`app.useLogging(false)` turns it off) and delivered to

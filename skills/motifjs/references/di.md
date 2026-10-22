@@ -100,11 +100,41 @@ requesting route scope. Anywhere else — a method, a callback, `new UserService
 `MJX409`. It is synchronous: async registrations need `deps` or `getAsync`. Components use
 `this.getService(token)`, not `inject`. Use `deps` when a test should construct the class by hand.
 
-`@Injectable({ lifetime, deps })`. The decorator runs when the module
+`@Injectable({ lifetime, deps, startup })`. The decorator runs when the module
 is evaluated (in `.ts` and `.tsx` files alike) and the class is registered automatically at
 `builder.build()` — no manual `add*` needed. A class whose module loads *after* `build()` (a service
 imported only by a lazily routed page) is registered on first resolve instead, so `getService` works
 there too. An explicit `add*`/`tryAdd*` registration always wins over the decorator.
+
+## Startup singletons
+
+`startup: true` creates a singleton inside `app.run()`, before the shell and the first page are built,
+without anything resolving it — for services that do their own work (document listeners, session
+watchers, connections). `build()` does not create them.
+
+```ts
+@Injectable({ lifetime: 'singleton', startup: true })
+export class KeybindingService {
+  private commands = inject(CommandService);
+  private onKeyDown = (e: KeyboardEvent) => { if (e.ctrlKey && e.key === 's') this.commands.run('file.save'); };
+  constructor() { document.addEventListener('keydown', this.onKeyDown); }
+  dispose() { document.removeEventListener('keydown', this.onKeyDown); }
+}
+
+builder.services.addSingleton(KeybindingService, { useClass: KeybindingService, startup: true });  // explicit: object form
+builder.services.addSingleton(SessionMonitor, { useFactory: (c: Config) => new SessionMonitor(c), deps: [Config], startup: true });
+```
+- Registration order (`add*` before `build()` as written, then `@Injectable` classes); deps first.
+  Already resolved with `get` before `run()` → not created again.
+- Created with `get`: a constructor error is thrown from `run()` and the app does not start; an async
+  factory / Promise throws `MJX402` — do not give those `startup`, use `await app.provider.getAsync(T)`.
+- Only `singleton`: on `transient`/`scoped` it is ignored with dev warning `MJX415`.
+- `@Injectable` classes whose module is loaded at `run()` are covered; one loaded later (lazy page) is
+  created on first resolve.
+- `replace(token, impl)` keeps `startup` unless the new registration sets it (`startup: false` turns it off).
+- `builder.rebuild()` while running: new provider, startup singletons created again in it at once
+  (constructor errors throw from `rebuild()`); components, `app.provider` and the `ServiceProvider`
+  token give the new provider; the old one is disposed without waiting. Before `run()` it creates nothing.
 
 ## Other members
 
@@ -114,6 +144,7 @@ there too. An explicit `add*`/`tryAdd*` registration always wins over the decora
 | `provider.getAllServices()` | the `ServiceCollection` behind the provider |
 | `services.getService(token)` | the `ServiceDescriptor` for `token` or `null` (same as `getDescriptor`; registers an unregistered `@Injectable` class on the way) |
 | `services.canAutoRegister(token)` | `true` when `token` is an `@Injectable` class not registered yet |
+| `services.getStartupServices()` | the `startup` singleton descriptors in creation order (registers loaded `startup` `@Injectable` classes on the way; dev warning `MJX415` for non-singletons) |
 
 ## Errors
 
@@ -128,6 +159,7 @@ there too. An explicit `add*`/`tryAdd*` registration always wins over the decora
 | `MJX409` | `inject()` outside a provider construction |
 | `MJX413` | `add*(token, fn)` with a non-constructible function |
 | `MJX414` | dev warning from `FromService` when resolution fails; it returns `null` |
+| `MJX415` | dev warning at `run()` / `rebuild()`: `startup` on a `transient` or `scoped` registration is ignored |
 
 ## Resolve
 

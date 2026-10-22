@@ -48,14 +48,17 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
 | `super('div')` / `super('div', props)` | `<div>`; a tag passed to `super` wins over a declared element type |
 | `super(existingNode, props)` | wraps an existing DOM node |
 | no constructor, or `super(props)` / `super()`, on `class X extends Component<HTMLDivElement>` | element from the declared generic (`static elementTag`, injected by the Motif Vite plugin in `.tsx`/`.jsx` and `.ts`/`.mts`/`.cts` files; can also be written by hand: `static elementTag = 'section'`) |
-| no constructor, or `super(props)` / `super()`, with no declared element type | **fragment** (comment marker; children are inserted between markers; attributes and DOM events on its tag reach nothing) |
+| no constructor, or `super(props)` / `super()`, with no declared element type | **fragment** (comment marker; children are inserted between markers; attributes on its tag reach nothing, DOM events on its tag listen on the content elements) |
 | `super(['a','b'])` | fragment holding one child component per array entry |
 
 Use SVG by declaring `Component<SVGSVGElement>` (namespace injected) or passing `{ options: { isSvg: true } }`.
 
 To narrow `props` in a subclass of an existing component, write `declare props: DialogProps;` (type only, no
 code). Never `props: DialogProps;` or `props!: DialogProps;`: that creates a new field that overwrites the base
-class's `props` with `undefined`. `declare` and `abstract` fields compile to nothing.
+class's `props` with `undefined`. `declare` and `abstract` fields compile to nothing. `declare props` types
+only `this.props`: the tag and `new X(...)` are checked against the constructor's parameter type, which the
+`Component<HTMLDivElement, Props>` generic or a typed constructor (`constructor(props: Props) { super(props); }`)
+provides; with `declare props` alone `<X note={5} />` and `new X({ note: 5 })` are not checked.
 
 ### `view()` vs imperative `controls`
 
@@ -80,6 +83,11 @@ this.controls.silentUnlink(child); // unlink from the collection only; DOM untou
 this.controls.items; this.controls.length; this.controls.forEach(fn); this.controls.map(fn);
 ```
 
+`motif.on('controladded', fn)` fires for every child added. `motif.on('controlremoved', fn)` fires only when a
+child leaves through `detach`, also when another component's `controls.add` takes it, after its leave
+transition and DOM removal; `remove`, `clear`, `clearAsync` and the child's own `dispose()` do not fire it.
+`e.control` is the child in both.
+
 ### Props and children
 
 - Props are whatever JSX attributes you pass: `<UserCard userId={42} highlighted />`.
@@ -88,7 +96,14 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
   removed from `props`; an object `ref` passed without JSX stays as `props.ref` (see Refs). On a component tag, a known DOM event name (`onclick`, `onChange`,
   `oninput:once`) compiles to a listener on the component's own element (`motif.on`) and never reaches `props`;
   on a fragment component it listens on the content elements (every top-level child element, nested fragments included, later children too).
-  Every other `on*` prop (`onSave`, `onValueChange`) is an ordinary callback prop in `this.props`.
+  Every other `on*` prop (`onSave`, `onValueChange`) is an ordinary callback prop in `this.props`. A name
+  the compiler does not know as a DOM event (`onmouseenter`, `onpointerdown`, `onfocusin`, `ontransitionend`)
+  creates no listener on a component tag and stays in `this.props` without a warning; listen to it with
+  `on:mouseenter={…}`.
+- `props` is a plain object taken once when the tag is set up: a getter that reads `this.props.x`
+  (`class={() => this.props.highlighted ? 'on' : ''}`) does not re-run for a new value from the parent. For a
+  live prop the parent passes a getter or a ternary and the child reads it with `read()` (`Bind<T>`,
+  jsx-and-reactivity.md).
 - `options={{ hideStrategy, disableDisposal }}` is copied into `this.motif.options`; other keys of
   `options` (apart from `isSvg`, read when the element is created) are ignored, so do not use
   `options` as a data prop name.
@@ -99,7 +114,10 @@ this.controls.items; this.controls.length; this.controls.forEach(fn); this.contr
   `static elementTag`) gets them appended to the root automatically. Placed children are built only in
   their slot, so a slot behind `x-wait` / `x-display` or inside a nested element waits with them. With
   `super('div', props)` nothing is appended for you. Children that are never placed are disposed with the
-  component that received them.
+  component that received them. Placement is static: `this.childs` is a plain array given once at setup, so
+  assigning a new array, pushing into it or calling `setState()` does not change the slot, and
+  `{() => this.childs}` re-runs only when a reactive value read inside changes. The children's own bindings
+  stay live.
 
 ```tsx
 class Panel extends Component<HTMLDivElement, { title: string }> {
@@ -131,6 +149,11 @@ export function Todo(props: { text: string; done?: boolean }) {
 - `transition` on a function component's tag is applied to the returned root as well (a name, an object
   or a getter); the tag wins over a `transition` written on the root inside the function.
   A class component tag applies `transition` itself.
+- Calling the function directly (`Todo(props)`) is a plain call: it returns the root, but `ref`, the common
+  attributes and `options` are applied only through the tag or `motifComponent(Todo, props)`. Without JSX,
+  `motifComponent(Todo, { … })` applies `ref`, the common attributes, `options` and `transition` to the root;
+  hook keys (`onMounted`, `preconfig`, `initializeComponent` …) stay in the function's `props` and do not run,
+  so write the hooks on the root inside the function.
 - `FNComponent(viewFn)` wraps a view function into a factory explicitly (rarely needed; JSX does it).
 
 ## Options-API object
@@ -146,7 +169,14 @@ under strict and complete in the editor (without it `this` is the plain object a
 is reported as `MJX122` and the component is still created.
 A function returning such an object works wherever a component goes: a JSX tag, a route `control`,
 a `Lazy` `default`, and `new Component(Factory, props)`. A route calls it as `fn(app)` and its `ctor`
-receives `undefined`.
+receives `undefined`. Elsewhere the factory receives the tag's props, so `(props: P) => motifOptions({ … })`
+reads them in a closure and types the tag; a factory without a parameter makes `<X note={…} />` a TS2322.
+Lifecycle members on the object that run: `onConfigured`, `onBuilding`, `initializeComponent`, `onBuilt`,
+`onMounted`, `onVisibilityChanged`, `onActivated`, `onDeactivated`, `onDisposing`, `onDisposed`.
+`onInitializing`/`onInitialized` never run (they finish while `el` is created, before the members are
+copied), and a member `onConfig` runs only when `el` is a class component. An `onConfig={…}` prop on the tag
+runs, but with a tag-name `el` it runs while the root is created: the members are not copied yet, `ctor` has
+not run and `parent` is `null`; put setup that touches the members in `ctor` or `onConfigured`.
 
 ## Members you will use
 
@@ -170,7 +200,7 @@ receives `undefined`.
 | `motif.options.hasEvent(name)` | `true` when a `motif.on(name, …)` listener is registered (names are stored lowercased); a `:once` listener that has run is no longer registered. |
 | `motif.options.enableRouterClassing = { to, path, activeClass?, exactClass?, onActive?, offActive?, onExact?, offExact? }` | Setter; toggles the classes on the root on every route change (subscription auto-disposed). `to`: `'all'`, `'active'` (segment-prefix match, exact included), `'exact'` or `'none'`. A failure is reported as `MJX105`. |
 | `motif.options.transition` | Enter/leave animations (styling-and-transitions.md). |
-| `setState()` / `reState()` | Re-run the registered bindings of this subtree (text, attribute, class and style getters, `model`; lists rebuild their rows). Only needed for non-reactive data; `setState` runs the children first, `reState` this component first. |
+| `setState()` / `reState()` | Re-run every binding of this subtree for plain (non-reactive) data: text and attribute paths, class and style getters, `x-text`, `x-html`, `value`/`checked`/`x-model`, `x-wait`/`x-display`, `{() => …}` and member-call slots, `&&`/ternary/`switch` branches (rebuilt only when the condition value changed) and `watch`; lists rebuild their rows. `setState` runs the children first, `reState` this component first. |
 | `getService(Token)` | DI resolve via nearest provider; `null` if missing. |
 | `useModel(obj)` | Same as `reactive(obj)`. |
 | `motif.register(disposable)` / `motif.setDisposable(fn)` | Cleanup on dispose. |
@@ -196,7 +226,10 @@ class Form extends Component<HTMLFormElement> {
 
 `ref` receives the tag's **component** (on a plain DOM tag, the `Component` wrapping the element); use
 `.element` for the node. It is called while the component is constructed (before `build()`) and is never
-written to the DOM. `props`, the common attributes and `options` are already applied when it runs; on a class
+written to the DOM. On a class or Options component tag `props`, the common attributes and `options` are already applied when
+it runs; on a plain DOM tag `options` and the attributes given to the constructor (a spread, or keys of the
+object without JSX) are applied, while attributes written inline in JSX are written during build, after the
+ref; on a class
 component the subclass's own fields are not yet initialized (JavaScript sets them after the base constructor
 returns), so use a ref to store the component (`ref={(b) => (this.okButton = b)}`), not to write its fields. Two forms:
 
@@ -210,6 +243,8 @@ returns), so use a ref to store the component (`ref={(b) => (this.okButton = b)}
   Without JSX, `new Card({ ref })` applies it to that component the same way.
   Rule: a function ref is called with the component and removed from props; an object ref is
   assigned the component in place (`props.ref`), e.g. `const p = { ref: {} }; const c = new Card(p); p.ref === c`.
+  On a function component an object ref is not assigned; use the callback form. `ref={importedFn}` breaks
+  `vite build` ("Illegal reassignment of import"); write `ref={(s) => importedFn(s)}`.
 - To expose an inner element, use a separately named prop and pass it to the inner tag's `ref`
   (`ref={props.inputRef}` or `ref={(c) => props.inputRef?.(c)}`):
 
@@ -224,14 +259,17 @@ function SearchBox(props: { inputRef?: (c: Component) => void }) {
 class's `view()` is applied (the field is already assigned, the method already called); `sender` is the ref'd
 tag's component. It does not run for callback refs (`ref={(c) => …}`). It is a member of the class whose
 `view()` holds the JSX, not of the ref'd component. It runs for JSX in the class's methods and fields (arrow
-functions included), not in function components, module-level JSX or `function` expressions inside a method.
+functions included), not in function components, module-level JSX, `function` expressions inside a method or
+object methods (an Options `view()`, whose `ref={this.x}` is still assigned). A nested tag's ref is applied
+when its parent tag is set up, after that tag's siblings were created, so the order can differ from the
+source: in `<form><label><input ref={this.title} /></label><textarea ref={this.body} /></form>` `body` comes first.
 
 ## Communicating between components
 
 - Parent → child: props (static) or shared `reactive()` objects (live).
 - Child → parent: callback props. `onSave={(v) => ...}` stays in `this.props.onSave` (call it as
   `this.props.onSave?.(v)`). Pick names that are not DOM event names: `onChange`, `onInput`, `onSelect`,
-  `onToggle`, `onResize`… on a component tag become root-element DOM listeners and never reach `this.props`
+  `onToggle`, `onResize`, `onSearch`… on a component tag become root-element DOM listeners and never reach `this.props`
   (compiler warning `MJX002`), or call the parent through `this.parent`.
 - Anywhere ↔ anywhere: `this.context.on('evt', h)` / `this.context.fire('evt', payload)` (a subscription
   made through `this.context` is removed when the component is disposed), or a singleton service /
@@ -244,7 +282,7 @@ functions included), not in function components, module-level JSX or `function` 
 Components form a live object tree that can be walked in every direction:
 
 ```tsx
-this.parent;                         // parent component; null at the root
+this.parent;                         // parent component; null while not attached (app.run's root has the app shell)
 this.controls.items;                 // children
 this.siblings.next();                // next sibling (undefined at the end)
 this.siblings.prev();                // previous sibling (undefined at the start)
@@ -263,6 +301,7 @@ this.$('input').fromDom();           // matching DOM nodes inside the element: N
 - `siblings` reads the parent's `controls.items`; without a parent every method returns `undefined`.
 - `fromComponent()` walks the component tree depth-first from this component (it is included when it
   matches) and matches each component's element against the selector. A component whose root is a
-  fragment starts from the nearest ancestor that owns a real element. `fromDom()` runs
+  fragment starts from the nearest ancestor that owns a real element, so matches in sibling components are
+  included. `fromDom()` runs
   `querySelectorAll` inside that element; a disposed component returns `null` / `[]`.
 - A plain tag in JSX is a component too: `sender` in an event handler is that tag's component.

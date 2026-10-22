@@ -98,7 +98,7 @@ motif.options                                          // transition, hideStrate
 ## Reactivity
 
 ```ts
-reactive<T>(m: T): T; useModel<T>(m: T): T
+reactive<T>(m: T): T; useModel<T>(m: T): T   // a number, string or boolean is boxed: reactive('') is { value: '' }
 createSignal<T>(v): Signal<T>; new Signal(v, equals?); Signal.create(v, equals?); createComputed<T>(fn): Computed<T>; createLazyComputed<T>(fn): LazyComputed<T>
 effect(fn, onValueChanged?): () => void   // onValueChanged(value) runs after every run of fn (the first included) with fn's return value, untracked; a run in which fn throws has no value: onValueChanged is not called, MJX208 is reported, tracking continues
 untracked(fn): T; deepClone(v); clearModel(m)
@@ -106,7 +106,7 @@ Signal: value, peek(), update(fn), mutate(fn), notify(), asReadonly(): ReadonlyS
 Computed: value, peek(), dispose(); LazyComputed: value, peek(), isDirty, dispose()
 type Bind<T> = T | (() => T); toGetter(v: Bind<T>): () => T; read(v: Bind<T>): T
 configureReactivityLeakMonitor({ enabled?, threshold?, name? })   // same switch as app.useReactiveMonitor
-asyncTracking                                                    // used by compiler output (Virtualization dataRequest); not for app code
+asyncTracking                                                    // emitted around the awaits of an async function written inline on <Virtualization dataRequest>; not for app code
 ```
 
 `import { debugGetDeps, debugGetDepMap } from '@motifx/core/devtools'` — dependency maps of reactive objects (tests/diagnostics).
@@ -164,8 +164,9 @@ A package exposes its own state with
 ```ts
 ServiceCollection: addSingleton/addScoped/addTransient(token, impl), tryAdd*(token, impl): boolean, replace(token, impl, lifetime?), remove(token), has(token), reset(), getDescriptor(token), buildServiceProvider()
 ServiceProvider: get(token), getAsync(token), createScope(name?), dispose()
-Injectable({ lifetime?, deps? }), inject(token) → instance (only during provider construction, else MJX409), FromService(token) → instance | null (dev warning MJX414 on failure); all three type the result from a class token, `<T>` only for string/symbol tokens; add*(token, fn) with a non-constructible fn → MJX413
+Injectable({ lifetime?, deps?, startup? }), inject(token) → instance (only during provider construction, else MJX409), FromService(token) → instance | null (dev warning MJX414 on failure); all three type the result from a class token, `<T>` only for string/symbol tokens; add*(token, fn) with a non-constructible fn → MJX413
 type ServiceLifetime = 'transient' | 'singleton' | 'scoped'
+startup: true   // on @Injectable or the add* object form ({ useClass | useFactory, startup: true }): a singleton created inside app.run() and again on builder.rebuild()
 ```
 
 ## Routing
@@ -259,7 +260,9 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX409` | thrown | `inject()` outside a provider construction |
 | `MJX413` | thrown | `add*(token, fn)` with a non-constructible function |
 | `MJX414` | dev warning | `FromService` failed; it returns `null` |
+| `MJX415` | dev warning | `startup` on a `transient` or `scoped` registration; it is ignored |
 | `MJX503` | thrown | several disposables threw while disposing a store (errors in `cause.errors`) |
+| `MJX507` | dev warning | leak monitor (`app.useReactiveMonitor` / `configureReactivityLeakMonitor`): the effects tracking one field reached `threshold` |
 | `MJX601` | thrown | `Query.first()` on an empty sequence |
 | `MJX602`–`MJX605` | thrown | `Resilience`: circuit open / bulkhead queue full / rate limit exceeded / timeout (`TimeoutError`) |
 
@@ -272,7 +275,9 @@ as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method
 (ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors `MJX006`
 (unsupported directive), `MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
 `MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal),
-`MJX013` (unsupported JSX tag name or child); `MJX014` (`motif-lint` cannot read the tsconfig).
+`MJX013` (namespaced tag name such as `<svg:rect>`, or a spread child `{...items}`; a lowercase non-HTML
+name such as `<card>` is no error, it resolves to the identifier in scope and a missing one fails at runtime
+with `ReferenceError`); `MJX014` (`motif-lint` cannot read the tsconfig).
 
 ## JSX-only props
 

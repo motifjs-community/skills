@@ -40,11 +40,6 @@ Rollup has no mode of its own, so tell it about production builds: `compiler({ p
 
 On Vite with Rolldown (Vite 8) the plugin also sets `optimizeDeps.rolldownOptions.transform.jsx` to `'preserve'` unless the app sets it, so the dependency scan reads `.jsx` files without looking for another JSX runtime.
 
-### Per-file opt-out
-
-A file containing the comment `//useReact` or `//useVue` is skipped by the plugin (useful when a
-single file must compile with another JSX runtime).
-
 ### Development-only code
 
 A production build removes code marked for development only, in app files and in packages under
@@ -52,11 +47,11 @@ A production build removes code marked for development only, in app files and in
 whatever `app.useDevelopment()` says.
 
 ```ts
-/* @DEV-ONLY */ console.log('built', this);    // removes the one statement that follows
+/* @DEV-ONLY */ app.useDevelopment(true);        // removes the one statement that follows
 
-/* @DEV-ONLY-BEGIN */
-const probe = createProbe(app);                  // removes everything up to END, markers included
-probe.attach();
+/* @DEV-ONLY-BEGIN */                            // removes everything up to END, markers included
+app.useReactiveMonitor({ enabled: true, threshold: 200, name: 'app' });
+(globalThis as any).app = app;
 /* @DEV-ONLY-END */
 ```
 
@@ -94,8 +89,8 @@ npx motif-explain src/pages/Home.tsx --site prop  # only component props (child|
 npx motif-explain src/pages/Home.tsx --json --code   # { explanations, code: { file: generated } }
 ```
 
-Reactivity classes: `LIVE` (live effect), `STATIC` (literal such as a string, number, negative number, boolean or `null`; no binding), `ONCE` (evaluated once
-in `initializeComponent` — `attr={f(x)}`, `prop={object}`), `RECEIVER` (passed as a function; liveness depends
+Reactivity classes: `LIVE` (live effect), `STATIC` (no binding: a literal such as a string, number, negative number, boolean or `null`, a valueless attribute, a JSX-valued prop, fixed forms such as `transition`/`options`, and the element itself, whose inner expressions get their own rows), `ONCE` (evaluated once
+in `initializeComponent` — `attr={f(x)}`, `prop={object}`; with `prop={object}` the receiver gets the object itself, so reading its fields inside a binding sees in-place changes, while a replacement object at the source is not seen), `RECEIVER` (passed as a function; liveness depends
 on the receiver's `Bind<T>` contract), `RUNTIME` (`attr={variable}`: function → live, value →
 once). Programmatic: `import { explain } from '@motifx/compiler'` → `MotifExplanation[]`.
 
