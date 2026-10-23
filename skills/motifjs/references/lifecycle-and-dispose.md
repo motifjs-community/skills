@@ -12,7 +12,7 @@
 | 6 | `initializeComponent(sender)` | right before `view()`; the compiler puts the code generated from JSX here | `sender.bindings.*` calls when building without JSX |
 | 6b | `oninitializeComponent(sender, e)` | right after all `initializeComponent` code (class method, tag value, compiler-generated), before `view()`; runs in order: class method, then tag props; on a function component tag it applies to the returned root | your own setup that must run after the compiler-generated setup (attributes, events, bindings and JSX children already exist) |
 | 7 | `onBuilt` | component + children built (element may still be inside a detached fragment) | wiring that does not need layout |
-| 8 | `onMounted` | element attached to `document` — once (immediately if already attached) | focus, measure, third-party widgets |
+| 8 | `onMounted` | once, in a later task after the element is attached to `document` (also when it already was); the screen may already be painted | only work that needs the element in the page and visible: focus, measure, third-party widgets; anything else goes in `onBuilt` |
 | – | `onActivated` / `onDeactivated` | an already built component is removed from the DOM without disposal (`onDeactivated`) and put back (`onActivated`): `keepAlive` route return, `controls.detach`/`silentDetach` then `controls.add` (incl. moving to another parent), `motif.hide()`/`motif.show()` (incl. `x-wait`/`x-display`), Virtualization rows scrolled out/in. Not on first appearance. Propagates to the visible subtree, parent first; a hidden child is activated by its own `motif.show()` | refresh data, pause timers |
 | – | `onVisibilityChanged` | when `motif.show()/hide()/toggle()` (incl. `x-wait`/`x-display`) changes visibility; it runs before `isVisible` is updated (on hide after the leave animation), so inside it `isVisible` still holds the previous value and `e.visible` (`VisibilityChangedEventArgs`) the new one | |
 | – | `onDisposing` | teardown begins | manual cleanup |
@@ -22,7 +22,10 @@
 for **subclasses** (`class X extends Component`) it is deferred to the start of `build()` so that
 class fields (`state = reactive(...)`, injected services) are already initialized — it still runs
 before `onConfigured`. 4–7 run inside `build()`; `onMounted` fires when the element reaches `document`
-(same mechanism as `x:mounted`; the observer is released on dispose). Every hook receives
+(same mechanism as `x:mounted`; the observer is released on dispose) and runs in a later task: the queue
+is processed in 8 ms slices, so many heavy mounts (wrapped widgets) do not block the page; the browser
+paints and handles input between slices. Children run before their parent; a component disposed before
+its turn is skipped. Every hook receives
 `(sender, e: { cancel: boolean })`. Hooks may be `async`. A subclass that is never built never
 receives `onConfig`. A hook that throws, or returns a promise that rejects, is reported as `MotifError`
 `MJX122` (`console.error` and `errorHandler.addListener` listeners, in production too) and the component
@@ -157,7 +160,8 @@ that are not in the tree; if it does not drop after leaving a page, those compon
 ## Wrapping third-party libraries (charts, editors, maps, drag and drop)
 
 1. Create the library instance in `onMounted` (the element is in `document`; `onBuilt` may run while
-   it is still in a detached fragment).
+   it is still in a detached fragment). Many wrappers mounting at once are run in slices, so their
+   construction does not block the page.
 2. Register its `destroy()` with `this.motif.setDisposable(...)` right where you create it; do the same
    for timers, `ResizeObserver`, sockets.
 3. Feed reactive data through `this.bindings.watch`: take a plain snapshot in the tracked part and hand
