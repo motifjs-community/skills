@@ -12,7 +12,7 @@ metadata:
 
 MotifJS is a UI framework for JavaScript and TypeScript (JSX/TSX) for long-lived, state-heavy browser apps.
 There is **no virtual DOM, no diffing, no re-render loop and no SSR**. The `@motifx/compiler` compiler
-turns **every JSX element into a live component object** (`_mc(tag, setup)`) and builds the tree in code
+turns **every JSX element into a live component object** (`_mc(tag, initializeComponent)`) and builds the tree in code
 with `sender.controls.add(...)`; there are no HTML template strings. Each element has its own `controls`,
 `class`, `attr`, `bindings`, `motif.on` and lifecycle, and every dynamic expression becomes a fine-grained
 *binding* on that component that patches only the text node / attribute / list slot that depends on the

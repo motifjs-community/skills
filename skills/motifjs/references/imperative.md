@@ -1,6 +1,6 @@
 # Writing views without JSX (the imperative style)
 
-Every JSX element compiles to one call, `motifComponent(tag, setup)`, and the tree is built with
+Every JSX element compiles to one call, `motifComponent(tag, initializeComponent)`, and the tree is built with
 `sender.controls.add(...)`. A project written in plain `.ts` / `.js` writes those calls by hand: the
 compiler's output, typed in, the way a desktop UI toolkit is used. The runtime, the bindings, the
 lifecycle and the rules of `SKILL.md` are the same; only the spelling changes. Where JSX is available
