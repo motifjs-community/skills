@@ -111,7 +111,7 @@ transition and DOM removal; `remove`, `clear`, `clearAsync` and the child's own 
   them itself (`{this.childs}` / `{() => this.childs}` in JSX or `this.controls.add(...this.childs)`,
   wherever and whenever, also inside a slot's setup function); a class without `view()` and without a
   constructor element (fragment root, or a declared element from `Component<HTMLDivElement>` /
-  `static elementTag`) gets them appended to the root automatically. Placed children are built only in
+  `static elementTag`) gets them appended to the root automatically. An Options object follows the same rule: without `view()` its `childs` are appended to `el`; with `view()` it places them itself. Placed children are built only in
   their slot, so a slot behind `x-wait` / `x-display` or inside a nested element waits with them. With
   `super('div', props)` nothing is appended for you. Children that are never placed are disposed with the
   component that received them. Placement is static: `this.childs` is a plain array given once at setup, so
