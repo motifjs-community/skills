@@ -63,6 +63,11 @@ in a `<!--h-->` comment trace (fast), `'detach'` removes from DOM without a trac
 `'placeholder'` everywhere, list rows included. A component that waits from the start is not built but its trace is
 already in place.
 
+A fragment component hides like an element: each visible child swaps in its own trace and plays its own leave, the
+fragment is notified first, and the children keep their own `isVisible`. A child added while the fragment is hidden
+(new, already built, or moved from another parent) stays hidden; its place is its position in `controls`, and it goes
+there when the fragment is shown, with its own `hideStrategy` ignored. A child that is hidden itself stays hidden.
+
 `x-display={() => bool}` is the declarative form.
 
 ## Wait state
