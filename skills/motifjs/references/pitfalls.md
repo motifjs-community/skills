@@ -236,7 +236,7 @@
 - `scoped` services: one instance per navigation (everything the navigation puts on screen, constructor
   injection included, shares it; callers hold a handle that follows the current navigation); without a
   router there is one instance on the root provider, disposed with `app.provider.dispose()`. See di.md.
-- SSR is unsupported by design. Importing `@motifx/core` works without a DOM, but creating any element
+- SSR is not supported; it has not been planned yet and may be considered later. Importing `@motifx/core` works without a DOM, but creating any element
   throws `MJX101` when no `document` exists.
 
 ## Diagnosing "it does not update"

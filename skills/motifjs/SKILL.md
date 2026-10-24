@@ -110,7 +110,7 @@ app.run('#app', new Counter());
 11. **Never keep `effect()` return values unregistered** inside components; use `this.bindings.watch` instead.
 12. **Async after dispose:** wrap with `this.using(promise, cb)` (callback skipped once disposed) or `this.doWork(promise)` (typed `Promise<T | MotifError>`; once disposed it resolves to a `MotifError` MJX108 instead of the value or the rejection, so check `instanceof Error` before using the value).
 13. **Add imperatively any time:** `this.controls.add(<div/>)` inserts into the DOM immediately; there is no flush to await.
-14. **Errors do not propagate.** A throw (or rejected promise) in a lifecycle hook (methods, JSX props, `ref` callbacks and `motif.on('x:built' | 'x:mounted' | …)` listeners) is reported as `MotifError` `MJX122`, in an event handler (DOM, `motif.on`, `app.on`/`app.fire`, `onRouterChanged`) as `MJX123`, in an effect/binding function as `MJX208`; the component keeps working. Reports go to `console.error` (unless `app.useLogging(false)`) and to `errorHandler.addListener(fn)` listeners, in production too; `error.code` holds the code and `error.cause` the original error.
+14. **Errors do not propagate.** A throw (or rejected promise) in a lifecycle hook (methods, JSX props, `ref` callbacks and `motif.on('x:built' | 'x:mounted' | …)` listeners) is reported as `MotifError` `MJX122`, in an event handler (DOM, `motif.on`, `app.on`/`app.fire`, `onRouterChanged`) as `MJX123`, in an effect/binding function as `MJX208`, in a callback given to `using` as `MJX129`; the component keeps working. Reports go to `console.error` (unless `app.useLogging(false)`) and to `errorHandler.addListener(fn)` listeners, in production too; `error.code` holds the code and `error.cause` the original error.
 
 ## Two more component styles (all compile to the same core)
 
@@ -132,6 +132,10 @@ export const MessageBox = () => motifOptions({
 });
 ```
 
+## When MotifJS itself looks wrong
+
+If a minimal reproduction shows that MotifJS, not the app, behaves against this skill, the docs or its own types, tell the user what you found and ask whether they want it reported. Never file anything without a yes. `references/reporting-bugs.md` lists the checks to run first, gives the issue template with a filled example, and explains how to file it: yourself, with `gh` or a connected GitHub tool, when that is authorized and the user agrees to the final text; otherwise by handing the user the filled issue and the new-issue link. The reproduction in an issue is always made up; the user's code, names and data never go into it.
+
 ## Reference map (read on demand)
 
 | Need | File |
@@ -152,6 +156,7 @@ export const MessageBox = () => motifOptions({
 | Writing Jest/jsdom tests for MotifJS components | `references/testing.md` |
 | Compact export list with signatures (incl. `Query`, error handling, `@motifx/core/devtools`) | `references/api-cheatsheet.md` |
 | React-habit mistakes and known compiler/runtime quirks | `references/pitfalls.md` |
+| Telling a MotifJS bug from app code, the issue template, filing or handing it over | `references/reporting-bugs.md` |
 
 When unsure about a signature, the ground truth is `node_modules/@motifx/core/dist/index.d.ts`
 (runtime types) and the sources shipped in `node_modules/@motifx/core/src/`. Do not invent
