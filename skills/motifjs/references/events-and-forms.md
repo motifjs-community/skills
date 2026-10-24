@@ -189,6 +189,39 @@ start it at `false`),
 `<input setSelectionRange={[0, 5]} />`, `<dialog showModal={true} />`; `reportValidity`, `checkValidity`, `select`, `reset`, `submit`
 belong to the same group (full list in jsx-and-reactivity.md).
 
+### Submitting with a function `action`
+
+```tsx
+<form action={(data) => notes.search(String(data.get('q')))}>
+  <input name="q" />
+  <button type="submit">Search</button>
+  <button type="submit" formAction={() => notes.clearSearch()}>Clear</button>
+</form>
+```
+
+- `action` and `formaction` are the one attribute pair whose **value** may be a function. The value is
+  resolved like any attribute getter; a function result is bound as the submit handler and no attribute
+  is written, a string result is written as the URL and stays live (`action="/search"`,
+  `action={state.url}`, `action={state.saving ? save : state.url}`). Because the written function is the
+  value, `action={() => state.url}` is read as a handler too: write `action={state.url}` for a live URL.
+- On submit the author's own `onsubmit` listeners run first. When one of them called `preventDefault()`
+  (`:prevent` included) the handler is skipped. Otherwise the framework calls `preventDefault()`, builds
+  `new FormData(form, e.submitter)` (the submitter's `name`/`value` included) and calls the handler with
+  the arity rule: `(data)`, or `(sender, data)` where `sender` is the component carrying the attribute
+  (the form for `action`, the button for `formaction`).
+- A function `formaction` on the submitter wins over the form's `action`; a string `formaction` on the
+  submitter is left to the browser.
+- A handler that throws, or an async handler whose promise rejects, is reported as `MJX123`
+  (`The 'submit' event handler threw.`). The form is not reset afterwards, and the core keeps no pending
+  state: the operation sets its own flag (`this.state.saving = true; try { await … } finally {
+  this.state.saving = false; }`) and the view binds `disabled={() => this.state.saving}`.
+- `form.requestSubmit()` and a submit button run the handler; `form.submit()` fires no submit event, so it
+  bypasses it, like in the browser.
+- Without JSX the value is given through a getter, like every other attribute:
+  `form.attr.add({ action: () => save })`, `motifComponent('form', { action: () => save })`;
+  `attr.add({ action: save })` reads `save` as a getter and writes its result.
+- `npx motif-explain` lists the attribute as `attr.action`.
+
 ### Validation pattern
 
 ```tsx

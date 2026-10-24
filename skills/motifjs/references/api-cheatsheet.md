@@ -288,3 +288,6 @@ with `ReferenceError`); `MJX014` (`motif-lint` cannot read the tsconfig).
 method-like props that call the element method and write no attribute (`focus`, `blur`, `click`, `select`, `scrollIntoView`, `show`/`showModal`/`showPopover` (`true` opens, `false` closes), `close`, `togglePopover`, `requestSubmit`, `checkValidity`, `reportValidity`, `showPicker`, `load`, `setSelectionRange`/`setRangeText`/`setPointerCapture`/`releasePointerCapture`/`fastSeek` (value = argument, array = argument list), …; a getter re-calls on change). `hideStrategy` is given through the `options` prop
 (`options={{ hideStrategy: 'detach' }}`) or set on `motif.options.hideStrategy` in code; a bare
 `hideStrategy="…"` attribute is not special (it becomes a DOM attribute / ordinary prop).
+`action` on `form` and `formAction` / `formaction` on `button` / `input` take a URL or a submit handler
+(`MotifFormAction`: `(data: FormData) => unknown` or `(sender, data) => unknown`); a function value is bound
+to the submit event, a string is written as the attribute (`references/events-and-forms.md`).

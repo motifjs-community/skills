@@ -94,7 +94,9 @@ compiler wraps an expression that reads a variable (`a + b`, `!state.open`, `sta
 a `?.` chain) in a getter,
 so it stays live; a plain call (`data-n={fmt(x)}`) is evaluated once; a bare identifier (`attr={v}`) is
 passed as is (live only when it holds a function); literal values (numbers, negative
-numbers, `true`/`false`, `null`, arrays, `new X()`) are passed to `attr.add` as they are.
+numbers, `true`/`false`, `null`, arrays, `new X()`) are passed to `attr.add` as they are. `action` and
+`formaction` are the exception where the resolved **value** may be a function: it is bound as the
+submit handler instead of being written as the URL (see `events-and-forms.md`).
 
 Attribute values: `false`, `null` and `undefined` remove the attribute, `true` and a valueless attribute
 (`<button disabled />`) write `""`, strings and numbers are written as they are (`tabindex={0}` →

@@ -18,6 +18,7 @@ output.
 | `disabled={() => s.busy} aria-pressed={() => note.pinned} type="button"` | `c.attr.add({ type: 'button', disabled: () => s.busy, 'aria-pressed': () => note.pinned })` — a function is a live getter, a literal is written once; `false`/`null` remove the attribute |
 | `class={() => open() ? 'row active' : 'row'}` | `c.class.add(() => open() ? 'row active' : 'row')`; a string or an array of both forms also works |
 | `onclick={() => …}`, `onsubmit:prevent={…}` | `c.motif.on('click', () => …)`, `form.motif.on('submit:prevent', fn)`; modifiers chain freely here. The typed signature is `(sender, e)`: write `(_c, e: Event) => …` when the event is needed |
+| `<form action={save}>`, `<button formAction={remove}>` | `form.attr.add({ action: () => save })`, `button.attr.add({ formaction: () => remove })` — the getter's value is the submit handler (called with the `FormData`); a string value is the URL |
 | `<input x-model={() => s.q} />` | `field.bindings.model(() => s.q, (value) => (s.q = value))` |
 | `<p x-display={() => cond}>` | `motifComponent('p', { preconfig: (c) => c.bindings.display(() => cond), initializeComponent: (c) => { … } })` — see `preconfig` below; `x-wait` is `bindings.wait` |
 | `{cond ? <A/> : <B/>}` | `c.bindings.ternary(() => cond, (frame) => frame.navigate(a()), (frame) => frame.navigate(b()))` |
