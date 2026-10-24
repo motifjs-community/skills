@@ -58,7 +58,7 @@ export default class TodoList extends Component<HTMLDivElement> {
 | `pageSize` | `number` | default 50 |
 | `mainTemplate` | `(content, state) => JSX` | wrap the list; place `<content></content>` or `{content}` where rows go (see the placement rule below) |
 | `loadingTemplate`, `emptyTemplate`, `errorTemplate` | | `errorTemplate(error)` shows failures of the first load, `refresh()` and `autoRefresh` reloads (without it they are reported as `MJX207`); a failing next-page request (`autoLoad`) is reported as `MJX207` and stored in `getState().error`, the loaded rows stay, no error view is shown, it is retried on the next scroll and a successful load clears `error` |
-| `filter` | `(items: T[]) => T[]` | applied to the loaded data; spacers/indices use the filtered length |
+| `filter` | `(items: T[]) => T[]` | applied to the loaded data on every load (not reactive); spacers/indices use the filtered length; when it removes every loaded item, `emptyTemplate` is shown (nothing without it) and no further page is requested, so filter in `dataRequest` when later pages may match |
 | `overscan` | `number` | extra rows rendered above **and** below the viewport; default = visible row count |
 | `cacheSize` | `number` | max off-screen row components kept alive for reuse (LRU); default `max(200, 3 x window)` |
 | `overscanPages`, `pageBuffer`, `renderMode` | | reserved; `'page'` mode is not implemented |

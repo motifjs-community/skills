@@ -43,7 +43,7 @@ in source order, on plain DOM tags and component tags alike.
 ```tsx
 class Chart extends Component<HTMLDivElement, { data: number[] }> {
   chart?: ExternalChart;
-  onMounted() {                                   // element is in the live DOM here
+  onBuilt() {                                     // the element and its content exist here
     this.chart = new ExternalChart(this.element, this.props.data);
     this.motif.setDisposable(() => this.chart?.destroy());
   }

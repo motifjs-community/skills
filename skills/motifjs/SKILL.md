@@ -1,6 +1,6 @@
 ---
 name: motifjs
-description: "Build, change or debug MotifJS apps (@motifx/core, @motifx/compiler), in JSX or in plain TS/JS with motifComponent. Use when code imports @motifx/core or the user mentions MotifJS. MotifJS is not React: read this before writing its code."
+description: "Build, change or debug MotifJS apps (@motifx/core, @motifx/compiler) in JSX or plain TS/JS. Use when code imports @motifx/core or the user mentions MotifJS. MotifJS is not React: read this first."
 license: MIT
 metadata:
   author: MotifJS

@@ -165,7 +165,7 @@ app.run('#app');              // no root → default RouterView is created
 `app.useRouter(routes)` (plain array) also works. `scrollMemory: true` and `stack: true` turn the
 feature on with every option at its default.
 
-Modes: `'history'` (default; path + query of the address bar, `pushState`/`replaceState`);
+Modes: `'history'` (default; path + query of the address bar, `pushState`/`replaceState`; routes match the whole path, `<base href>` and Vite `base` are not taken into account, so an app served under `/app/` writes its routes with the prefix or uses `'hash'`, where `/app/#/notes` matches `/notes`);
 `'hash'` and `'file'` behave the same (route after `#`); without `mode`, a page opened from a `file:` URL
 (Electron) uses the hash behaviour — `'history'` is not usable under `file:` (the path is a file path);
 `'shell'` never touches the address bar or history, always starts at `/`, ignores the page's own
