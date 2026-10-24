@@ -5,7 +5,7 @@
 | Wrong | Right | Why |
 |---|---|---|
 | `const [n, setN] = useState(0)` in a class | `state = reactive({ n: 0 })` | there is no `useState`; hooks are not the model |
-| `useEffect(() => …, [])` | `onMounted()` / `this.bindings.watch()` | no render cycle; `onBuilt` may run before the element is attached |
+| `useEffect(() => …, [])` | `onBuilt()` / `this.bindings.watch()`; `onMounted()` only when the element must be in the document | no render cycle; `onBuilt` may run before the element is attached |
 | `onClick`, `className`, `htmlFor` | `onclick`, `class`, `for` | DOM names |
 | `<div>{count}</div>` where `count` is a local | `<div>{state.count}</div>` or `{() => …}` | locals are frozen at build |
 | `const { items } = this.state` then `{items.map()}` | `{this.state.items.map()}` | destructuring drops the proxy |
