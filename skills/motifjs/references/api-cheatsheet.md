@@ -137,7 +137,7 @@ getScopes()                           // DI scopes: { id, kind: 'root' | 'naviga
                                       // pins: components outside the current page still keeping the scope (keepAlive)
 getStores()                           // stores still in use: { id, name, file?, type: 'reactive' | 'signal' | 'computed', value, stale?, released?, holders }
                                       // top-level module stores are named by the compiler while developing (name = variable, file = path);
-                                      // other early stores show when globalThis.__MOTIF_DEV__ = true is set before the app code runs
+                                      // early stores kept in a component or service field are found by the scan; stores kept only in a closure are not
                                       // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
 setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)
