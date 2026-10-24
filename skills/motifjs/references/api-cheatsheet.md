@@ -194,7 +194,7 @@ array); the source is never mutated. Arrays have no LINQ methods of their own.
 ## Errors, utilities
 
 `MotifError` (`Error` subclass with `code: MotifErrorCode`, an `MJX…` code; the framework throws it and passes it to `errorHandler` listeners; `MJX503` carries the individual dispose errors in `cause.errors`),
-`errorHandler` (`ErrorHandler`: `addListener(fn) → unbind`, `setUnexpectedErrorHandler`, `safeCall`…),
+`errorHandler` (`ErrorHandler`: `addListener(fn) → unbind`, listeners called in order; one that throws does not stop the others or the reporting code, its error is rethrown in a `setTimeout`, so `safeCall` still returns its fallback; `setUnexpectedErrorHandler`, `safeCall`…),
 `setUnexpectedErrorHandler(fn)` (receives uncoded errors caught by `safeCall`/`safeCallAsync` and by `Emitter` listeners, which also reach `addListener` as they are; the default rethrows in a `setTimeout`; coded reports such as `MJX122`/`MJX123`/`MJX208` never reach it),
 `safeCall(fn, context, fallback?)`, `safeCallAsync`, `safeCallSilent`,
 `Resilience.create.retry({...}).timeout({ timeoutMs }).circuitBreaker(...).bulkhead(...).rateLimiter(...).fallback({ fallback }).execute(fn)`
