@@ -241,6 +241,12 @@ The router opens one DI scope per navigation; route components it builds resolve
 `inject()` and `getService()` from it, so a `scoped` service is one instance per navigation, shared by
 everything on screen in it (see `di.md`).
 
+A route control that is itself registered in DI (`@Injectable` or `services.add…`) is resolved from the
+provider, and its lifetime is the page's: `transient` (the `@Injectable` default) builds a fresh page per
+visit; `scoped` builds one real page per navigation (disposed when left; with `keepAlive: true` the cached
+page outlives its scope); `singleton` is one page for the app, kept like a ready instance (detached and
+reattached with `onDeactivated`/`onActivated`, disposed by `app.dispose()`).
+
 ## Links
 
 ```tsx
