@@ -80,8 +80,9 @@ const fx = (s: ComponentBase) => {
 WAAPI keyframes take precedence over CSS class transitions when both exist.
 
 Imperative, outside enter/leave: `motif.options.transition.run(keyframes, options?, done?)` calls
-`motif.stopAnimations()` (not awaited), then `element.animate(keyframes, options)`, tracks the animation and returns
-it; `done` runs on `finish` (not on cancel). Where `element.animate` is missing (jsdom) `done` runs at
+`motif.stopAnimations()` (not awaited, so a running animation is cancelled), then `element.animate(keyframes, options)`,
+tracks the animation and returns it; `done` runs on `finish` and on cancel. Hiding during a keyframe enter cuts the
+enter and plays the leave. Where `element.animate` is missing (jsdom) `done` runs at
 once.
 
 ```ts
@@ -111,7 +112,7 @@ enter releases the waiting leave.
 
 ```ts
 this.motif.options.transition.skipNextLeave = true; await this.motif.hide();   // skip once (flag resets; a fragment root's visible children also hide without animation)
-await this.motif.stopAnimations();   // finishes the running CSS class transition at once; waits for tracked WAAPI animations to finish (does not cancel them), then forgets them
+await this.motif.stopAnimations();   // finishes the running CSS class transition and cancels tracked WAAPI animations; a cut leave completes the hide at once
 await this.dispose({ skipLeaveTransition: true });
 ```
 
