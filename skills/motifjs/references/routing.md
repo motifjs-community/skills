@@ -357,7 +357,8 @@ strips it on read); non-plain values (`Date`, `Map`) are stored untouched.
 
 **Restart and dispose.** `app.restartRouter()` builds a fresh router and disposes the old one. It uses
 the latest `useRouter` config when `useRouter` was called again after `run()` (such a config only takes
-effect through `restartRouter()`), otherwise the current config. It restarts at the current address
+effect through `restartRouter()`; until then the running router keeps the page, navigation and route
+fields on the old table), otherwise the current config. It restarts at the current address
 (`shell` mode: the page the router shows, `/` if it never navigated); the route table is rebuilt, the
 `keepAlive` cache and stack-kept pages are disposed, the page is rebuilt, no history entry is added, and
 `onRouterChanged` fires with `initial: true`, `direction: 'initial'`. Before `run()` it does nothing.
