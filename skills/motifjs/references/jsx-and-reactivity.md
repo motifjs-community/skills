@@ -2,6 +2,14 @@
 
 ## Reactive primitives (`@motifx/core` exports)
 
+Each tool is for a different shape of state; pick by what is held. `reactive` for a model with fields
+(nested objects, arrays, `Map`/`Set`; every field tracked on its own; the usual component and service
+state). `createSignal` for one value (a selected id, a scroll offset): written whole, an in-place change
+of an object inside it needs `mutate()`, equality can be customised. `createComputed` for a derived value
+that is read all the time, `createLazyComputed` for an expensive one read less often than its inputs
+change. `effect` (in a component `bindings.watch`) for side effects. They share one tracking system, read
+each other and reach the DOM through the same bindings.
+
 ```ts
 import { reactive, useModel, createSignal, createComputed, createLazyComputed, effect, untracked, deepClone, clearModel, read, toGetter } from '@motifx/core';
 ```
