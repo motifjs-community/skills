@@ -179,7 +179,7 @@ that are not in the tree; if it does not drop after leaving a page, those compon
      untracked(() => this.lib?.setData(snapshot));           // library reads are not tracked
    });
    ```
-4. An exception thrown from `onMounted` is reported as `MJX122` (`console.error` + `errorHandler`
+4. An exception thrown from `onBuilt` (or any other lifecycle hook) is reported as `MJX122` (`console.error` + `errorHandler`
    listeners, in production too) and the component stays in place without the library; wrap construction
    in `try/catch` when the wrapper must show a fallback or keep running without it.
 
