@@ -42,8 +42,11 @@ output.
   the setup, as the compiler does, not as keys of this object.
 - `motifComponent(Class, props)` constructs the class, and the object-form keys (`preconfig`,
   `initializeComponent`, `onMounted`, `childs`, `ref`) apply to it; `motifComponent(fnPart, props)` calls the
-  function and applies only `ref`, the fallthrough attributes (`class`, `id`, `aria-*`…), `options` and
-  `transition` to the root it returns: the hook keys do not reach that root, write them inside the function;
+  function and applies the same keys to the root it returns: `ref`, the fallthrough attributes (`class`,
+  `id`, `aria-*`…), `options`, `transition`, `key` / `indexkey`, `preconfig`, `initializeComponent`, the
+  lifecycle hooks and the `x-` keys. The hook and `x-` keys are taken out of the props the function
+  receives, as they are kept out of a class's `this.props`; callback props such as `onSave` stay.
+  `new Component(fnPart, props)` does the same;
   `motifComponent(instance)` returns the instance as is; `motifComponent({ initializeComponent })` (an
   object with no tag) is a component **without an element**, a fragment: the holder the compiler uses for
   lists. `new Component('div', { initializeComponent })` is the same as the string form and is what the
