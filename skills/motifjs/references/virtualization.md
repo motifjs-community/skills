@@ -11,8 +11,11 @@ interface Todo { id: number; title: string; completed: boolean }
 export default class TodoList extends Component<HTMLDivElement> {
   state = reactive({ todos: [] as Todo[] });
 
-  async onConfig() {
-    this.state.todos = await this.doWork(fetch('/api/todos').then(r => r.json()));
+  onConfig() {
+    this.doWork(fetch('/api/todos').then(r => r.json())).then((todos) => {
+      if (todos instanceof Error) return;
+      this.state.todos = todos;
+    });
   }
 
   view() {

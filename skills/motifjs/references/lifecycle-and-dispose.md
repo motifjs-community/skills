@@ -127,10 +127,13 @@ onConfig() {
 ### Dispose-safe async
 
 ```ts
-this.using(fetchData(), (data) => { this.state.items = data; });   // callback skipped if disposed
-const data = await this.doWork(fetchData());                       // resolves to an Error instance (no reject) if disposed
-if (data instanceof Error || this.isDisposed) return;
+this.using(fetchData(), (data) => { this.state.items = data; });   // callback skipped if disposed; a throwing callback is reported as MJX129
+this.doWork(fetchData())                                           // Promise<T | MotifError>
+  .then((data) => { if (data instanceof Error) return; this.state.items = data; })  // MJX108 once disposed
+  .catch((error) => errorHandler.report(error));                  // rejections while alive; once disposed the rejection is the cause of MJX108
 ```
+
+Both look at `isDisposed` when the result arrives. The flag turns true when disposal finishes, not when `dispose()` is called, so a result that arrives while the component is being disposed is still handled (its bindings are already stopped). A hidden, detached or moved component is not disposed; its result is handled. Without `onrejected`, `using` drops a rejection silently. `using` returns nothing; use `doWork` to await, chain or return the work. A `finally` after `doWork` runs in both cases, so do not touch the component there. Neither cancels the request: to cancel it, pass an `AbortController` signal to `fetch` and register `controller.abort()` with `motif.setDisposable`; that runs after `isDisposed` is true, so `using` drops the `AbortError` and `doWork` resolves to MJX108 with it as `cause`. Pick `using` when the result only goes into this component; pick `doWork` to chain steps, combine requests (`doWork(Promise.all([...]))`) or return the work to a caller.
 
 ### Leak monitoring (dev)
 

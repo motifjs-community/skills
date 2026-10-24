@@ -63,8 +63,8 @@ onRefCreated?(sender)   // after each ref={this.x} / ref={name} in this class's 
 build(); setState(); reState(); setText(s); style(v)
 isVisible; isWait (get/set)
 dispose(opts?: { deep?, skipLeaveTransition? }): Promise<void>; disposeAsync(opts?)
-using(promise, onfulfilled?, onrejected?)   // callbacks skipped once disposed
-doWork(promise): Promise<T>                 // resolves to an Error instance (does not reject) if disposed meanwhile
+using(promise, onfulfilled?, onrejected?)   // returns nothing; callbacks skipped once disposed; value typed from the promise; a callback that throws (or rejects) is reported as MJX129; a rejection with no onrejected is dropped
+doWork(promise): Promise<T | MotifError>    // value while alive, a rejection passes on; once disposed resolves to MotifError MJX108 (never rejects), a rejection becomes its cause
 getService(token): T | null  // T from any class token (constructor params, abstract, protected ctor); getService<T>(Class) gives the same T; getService<T>(stringOrSymbol) otherwise. Same rule for FromService, inject, provider.get/getAsync. serviceProvider; useModel(obj)
 $(selector): { fromDom(), fromComponent() }; siblings.{all,next,prev,nextAll,prevAll}()
 isBuilt, isInitialized (false in onInitializing, true from onInitialized on), isConfigured, isDisposed
@@ -226,11 +226,12 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | Code | Kind | When |
 |---|---|---|
 | `MJX101` | thrown | creating an element with no `document` (SSR / plain Node) |
-| `MJX108` | value | `doWork(p)` resolves to this `MotifError` (does not reject) when the component was disposed meanwhile |
+| `MJX108` | value | `doWork(p)` resolves to this `MotifError` (does not reject) when the component was disposed meanwhile; if `p` rejected, the rejection is its `cause` |
 | `MJX110` / `MJX111` | `Lazy` load error | `timeoutMs` elapsed / `signal` aborted; passed to `onError` (after a timeout `Fallbackview` is shown) |
 | `MJX126` | reported | a `Lazy` load failed with no `Fallbackview`; the host was cleared, original error in `cause` |
 | `MJX127` | thrown | a lazy route or `Lazy` loaded a module with no `default` export (or another non-component object; null/text/arrays/promises are placed as before); router: `cause` of `MJX304` + error route; `Lazy`: load failure. Fix: `export default`, or `() => import('./X').then(m => m.X)` |
 | `MJX128` | dev warning | a class component hides a `ComponentBase` member: override without `super` (`build`, `dispose`, `style` …), an instance field over a method/accessor, or a replaced `controls`/`attr`/`class`/`bindings`/`motif`/`element`/`parent`; once per class, behavior unchanged |
+| `MJX129` | reported | an `onfulfilled`/`onrejected` callback given to `using` threw or returned a rejected promise; original error in `cause` |
 | `MJX121` | dev warning | compiled code's compiler contract differs from the `@motifx/core` runtime |
 | `MJX122` | reported | a component hook, `ref` callback or `x:` lifecycle listener threw (`The component onBuilt hook threw.`) |
 | `MJX123` | reported | an event handler or application event listener threw (`The 'click' event handler threw.`) |

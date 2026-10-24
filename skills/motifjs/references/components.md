@@ -22,9 +22,12 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
   // Optional. Omit it entirely and the compiler-injected `div` is used.
   constructor(props: UserCardProps) { super('div', props); }
 
-  async onConfig(sender: ComponentBase, e: EventArgs) {     // props ready, not in DOM
-    this.state.user = await this.doWork(fetchUser(this.props.userId));
-    this.state.loading = false;
+  onConfig(sender: ComponentBase, e: EventArgs) {           // props ready, not in DOM
+    this.doWork(fetchUser(this.props.userId)).then((user) => {
+      if (user instanceof Error) return;                     // MJX108 once disposed
+      this.state.user = user;
+      this.state.loading = false;
+    });
   }
 
   onConfigured() { this.class.add(() => this.props.highlighted ? 'card active' : 'card'); }
