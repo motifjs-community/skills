@@ -72,7 +72,7 @@ The imperative API lives on the `this.motif` namespace (a subclass may define it
 this.motif.on('click', (s, e) => …);         // returns Promise<this>; auto-removed on dispose
 this.motif.on('click:once:prevent', handler);
 this.motif.on('x:mounted', () => …);         // once per subscription, in a later task after the element reaches document (also when it is already there); NOT again on re-attach — use x:activated; motif.off('x:mounted', fn) cancels a pending one
-this.motif.on('x:built', (sender, e) => …); // lifecycle events via the x: prefix: initializing, initialized, config, configured, building, built, mounted, visibilityChanged, activated, deactivated, disposing, disposed; motif.off(name, fn) removes every subscription of fn; a throwing x: listener (x:mounted included) is reported as MJX122 ("The component x:built hook threw.")
+this.motif.on('x:built', (sender, e) => …); // lifecycle events via the x: prefix: initializing, initialized, config, configured, building, built, mounted, visibilityChanged, activated, deactivated, disposing, disposed; motif.off(name, fn) removes every subscription of fn; initializing and initialized are over when the constructor returns, so a later subscription runs the handler once right away; a throwing x: listener (x:mounted included) is reported as MJX122 ("The component x:built hook threw.")
 this.motif.on('custom-thing', handler, false); // 3rd arg false = internal event only (no addEventListener)
 this.motif.trigger('custom-thing', { data: 1 }); // fire internal/custom event
 this.motif.off('click', handler);

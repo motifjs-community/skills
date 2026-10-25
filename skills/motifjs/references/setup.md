@@ -47,7 +47,7 @@ A production build removes code marked for development only, in app files and in
 whatever `app.useDevelopment()` says.
 
 ```ts
-/* @DEV-ONLY */ app.useDevelopment(true);        // removes the one statement that follows
+/* @DEV-ONLY */ app.useDevelopment(true);        // removes the one statement (or class member) that follows
 
 /* @DEV-ONLY-BEGIN */                            // removes everything up to END, markers included
 app.useReactiveMonitor({ enabled: true, threshold: 200, name: 'app' });
@@ -56,7 +56,8 @@ app.useReactiveMonitor({ enabled: true, threshold: 200, name: 'app' });
 ```
 
 - A marker is a block comment holding only the marker; a `//` line that mentions it is not a marker.
-- `@DEV-ONLY` works at any depth (inside methods, before `if`, before `const`).
+- `@DEV-ONLY` works at any depth (inside methods, before `if`, before `const`) and before a class member
+  (method, field, accessor), which it removes on its own.
 - `BEGIN` and `END` stand in the same block, between statements, imports or class members. A
   `BEGIN` without `END`, an `END` without `BEGIN`, a nested `BEGIN` or a range marker inside an
   expression stops the build with an error at the marker, in `vite dev` as well.
@@ -70,7 +71,7 @@ compiler({
   diagnostics: false,        // silence the MJX001–MJX004, MJX007, MJX015 and MJX016 compile-time warnings (default: on)
   explain: 'pages/Home',     // print "what did this expression compile to" for matching files
                              //   true = every file; string = path includes; RegExp = test(id)
-  exclude: 'legacy/',        // files the plugin leaves alone (string = path includes; RegExp = test(id); (id) => boolean); their JSX goes to Vite's own transform
+  exclude: 'legacy/',        // files the plugin leaves alone (string = path includes; RegExp = test(id); (id) => boolean); their JSX goes to Vite's own transform; a production build still strips their dev-only code
   storeNames: true,          // name top-level module stores for DevTools (default: on in vite dev, off in production builds)
   production: true,          // remove development-only code (default: vite build in Vite, NODE_ENV=production elsewhere)
 })

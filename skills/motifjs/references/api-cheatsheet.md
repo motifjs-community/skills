@@ -8,7 +8,7 @@ Ground truth: `node_modules/@motifx/core/dist/index.d.ts` (value + type exports)
 ```ts
 Application.CreateBuilder(): ApplicationBuilder      // .services: ServiceCollection; .build(): Application; .rebuild()
 Application.main: Application                        // global instance
-app.run(host: string | HTMLElement | Node, root?: ComponentBase): void   // no root → default <RouterView name="default"/>
+app.run(host: string | HTMLElement | Node, root?: ComponentBase): void   // no root → default <RouterView name="default"/>; a comment or text node host: the app goes right before it and the node stays (MJX416 when it has no parent element)
 app.useRouter(routes | { routes, mode?, fallbacks?, hooks?, scrollMemory?, stack? }): Application
 app.useGuard((ctx: { to, from }, next: (to?: string | false) => void) => void): Application
 app.use((ctx: RouteResolveContext, next) => any): Application        // ctx: { uri, context, rewritePath(uri) }
@@ -84,6 +84,7 @@ motif.options                                          // transition, hideStrate
 `Transporter.transport(child, newParent, options?)`, `transportMany(children, newParent, options?)`,
 `createSlot(name, parent?)` — the low-level mover behind `Transport` (`TransportOptions { index?, keepState?, owner? }`).
 `transport` unlinks the child from its old parent and adds it to the new one; the child stays alive (not disposed).
+With `index` the child is placed at that position in the new parent's element; `transportMany` places the children in the given order from that index.
 
 ## ControlCollection (`component.controls`)
 
@@ -254,6 +255,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX310`–`MJX316` | dev warning | route linter: empty path, child path/alias without `/`, child equals parent path, duplicate full path, alias equals own path, duplicate alias |
 | `MJX319` | dev warning | route linter: `:` outside braces in a path or alias (`/user/:id`); parameters are `{name}`, `:` only gives a default inside braces |
 | `MJX320` | dev warning | route linter: a parameter pattern cannot be used (does not compile, `(` never closed, or `/` inside; a pattern applies to one segment) |
+| `MJX321` | dev warning | `mode: 'history'` on a `file:` address; the router runs in hash mode |
 | `MJX401` | thrown | token not registered (and not `@Injectable`) |
 | `MJX404` | thrown | cyclic service dependency |
 | `MJX405` | thrown | second `Application.CreateBuilder()` while an app is running (allowed once the previous app is `'disposing'`) |
@@ -262,6 +264,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX413` | thrown | `add*(token, fn)` with a non-constructible function |
 | `MJX414` | dev warning | `FromService` failed; it returns `null` |
 | `MJX415` | dev warning | `startup` on a `transient` or `scoped` registration; it is ignored |
+| `MJX416` | thrown | `app.run(node)` got a comment or text node that has no parent element |
 | `MJX503` | thrown | several disposables threw while disposing a store (errors in `cause.errors`) |
 | `MJX507` | dev warning | leak monitor (`app.useReactiveMonitor` / `configureReactivityLeakMonitor`): the effects tracking one field reached `threshold` |
 | `MJX601` | thrown | `Query.first()` on an empty sequence |

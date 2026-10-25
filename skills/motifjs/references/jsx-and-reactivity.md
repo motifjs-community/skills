@@ -171,6 +171,8 @@ are written the same way:
 <Card headerTemplate={<h1>Title</h1>} title="Sub" />
 ```
 
+The braces may be left out: `headerTemplate=<h1>Title</h1>` compiles exactly like `headerTemplate={<h1>Title</h1>}`.
+
 The decision is made **once, when the parent's `initializeComponent` places it**: the placed component's own bindings stay live,
 but reassigning the prop later does not swap the DOM. Props are a plain object taken when the tag is set up,
 so `{() => props.headerTemplate}` does not track a later assignment either (nothing reactive is read inside).
@@ -188,7 +190,10 @@ On a **plain DOM tag** the spread object is applied as if the attributes were wr
 → attribute. Getters stay live; functions that take parameters (`renderItem: (x) => …`) are skipped.
 Inline attributes are applied after the spread, so `<div {...p} id="fixed"/>` keeps `id="fixed"`, even when
 `p.id` is a getter: the inline write owns the attribute and the getter stops writing it (the spread's other
-getters stay live). The same rule holds for `attr.add`: the last `attr.add` for a key owns that key.
+getters stay live). The same rule holds for `attr.add`: the last `attr.add` for a key owns that key. It holds for
+`value`/`checked`/`selected` as well (a later `bindings.add('value', …)` replaces the earlier binding; the `x-model`
+binding is not replaced) and per key for `style`: an inline `style={{ color: 'blue' }}` takes only `color` from a spread
+style getter, whose other keys stay live, and an inline style string takes the whole attribute.
 A spread never sets `innerHTML` or `srcdoc` (dev warning `MJX124`) and never writes a `javascript:` URL to `href`/`src`/
 `action`/`formaction`/`xlink:href` (dev warning `MJX125`; a getter's current value is removed). Use `x-html` (or inline `srcdoc`) for
 trusted HTML and write an intended `javascript:` link inline on the tag; inline attributes are not filtered.
@@ -227,7 +232,9 @@ adds `badge` renders `class="small badge"`.
 
 String, object (`{ width: '33%' }`) or getter returning either. A getter is **live**: keys it stops
 returning are cleared; a returned string replaces the whole inline style. `this.style(fn)` keeps one
-watcher — calling it again stops the previous one.
+watcher — calling it again stops the previous one. An object written after the getter (`style({ color: 'blue' })`)
+takes those keys from it; a string written after the getter stops it. CSS custom properties (`{ '--accent': c }`)
+are written like any other key, in objects and getters; a `null` or `''` value removes one.
 
 ### Method-like props
 

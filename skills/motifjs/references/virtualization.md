@@ -52,7 +52,7 @@ export default class TodoList extends Component<HTMLDivElement> {
 
 | Prop | Type | Notes |
 |---|---|---|
-| `dataRequest` | `({ page, pageSize, scrollTop }) => Promise<{ items, totalCount, hasMore }>` | **required**; `page` is 0-based; `totalCount` only fills `state.totalCount` (the scrollbar and spacers use the loaded data); `hasMore: false` stops further page requests |
+| `dataRequest` | `({ page, pageSize, scrollTop }) => Promise<{ items, totalCount, hasMore }>` | **required**; `page` is 0-based; `totalCount` fills `state.totalCount` and, while `hasMore` is true, sizes the scroll area: items not loaded yet take space below the rows (exact with a fixed `itemHeight`, averaged from the loaded rows with a function), scrolling into that space requests the pages in order up to it, a `totalCount` smaller than the loaded count is ignored, and `filter` applies to loaded items only; `hasMore: false` stops further page requests |
 | `itemTemplate` | `(item, index) => JSX` | **required** |
 | `itemHeight` | `number \| (item, index) => number` | **required**; a number for fixed rows, a function for known per-row heights (offsets are summed once per data change, lookup is a binary search) |
 | `pageSize` | `number` | default 50 |
