@@ -31,6 +31,10 @@ Tailwind/Bootstrap/plain CSS all work — MotifJS does not touch CSS.
 ## Transitions
 
 Enter runs when a component is inserted/shown; leave runs before it is removed/hidden.
+The last call wins: `motif.hide()` during an enter cuts the enter and plays the leave; `motif.show()` during a
+leave (also an `x-display` / `x-wait` condition turning back before the leave ends) cuts the leave, keeps the
+element in place and plays the enter from the start. The cut `hide()` promise resolves at once and the component
+stays visible. A fragment root's children follow the same rule.
 
 ### CSS class transitions
 
@@ -82,8 +86,8 @@ WAAPI keyframes take precedence over CSS class transitions when both exist.
 Imperative, outside enter/leave: `motif.options.transition.run(keyframes, options?, done?)` calls
 `motif.stopAnimations()` (not awaited, so a running animation is cancelled), then `element.animate(keyframes, options)`,
 tracks the animation and returns it; `done` runs on `finish` and on cancel. Hiding during a keyframe enter cuts the
-enter and plays the leave. Where `element.animate` is missing (jsdom) `done` runs at
-once.
+enter and plays the leave; showing during a keyframe leave cuts the leave and plays the enter. Where
+`element.animate` is missing (jsdom) `done` runs at once.
 
 ```ts
 this.motif.options.transition.run([{ transform: 'scale(1)' }, { transform: 'scale(1.1)' }, { transform: 'scale(1)' }], 200);
@@ -112,7 +116,7 @@ enter releases the waiting leave.
 
 ```ts
 this.motif.options.transition.skipNextLeave = true; await this.motif.hide();   // skip once (flag resets; a fragment root's visible children also hide without animation)
-await this.motif.stopAnimations();   // finishes the running CSS class transition and cancels tracked WAAPI animations; a cut leave completes the hide at once
+await this.motif.stopAnimations();   // finishes the running CSS class transition and cancels tracked WAAPI animations; a leave cut this way completes the hide at once (a leave cut by show() does not)
 await this.dispose({ skipLeaveTransition: true });
 ```
 
