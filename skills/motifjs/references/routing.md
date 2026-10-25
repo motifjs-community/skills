@@ -293,6 +293,16 @@ when a guard or `onLeave` cancels (`reason`: `'guard'`, `'onLeave'` or the `onLe
 `{ ok: false, uri, cancelled: true, reason: 'middleware' }` when a middleware stops it. `app.router.navigate` and
 `app.router.navigateByName` resolve to the same result.
 
+The new page never waits for the leaving page to be disposed. On a route change the router stops the
+leaving page's bindings and its components' `context.on` / `context.onRouterChanged` subscriptions, takes
+its `TransportTo` content out of the slots, removes its element (after its own leave transition, when it
+has one), mounts the new page and disposes the leaving page after the new page is painted. So
+`onDisposing`, `onDisposed` and `motif.setDisposable` cleanups (a library's `destroy()`) run later, see the
+target route and never delay the new page; the page keeps its navigation's `scoped` instances alive until
+it is disposed. `app.navigate` and `onRouterChanged` settle before that, and `app.dispose()` disposes pages
+still waiting. `keepAlive`, ready-instance and `singleton` pages and stack-kept pages are detached, not
+disposed.
+
 `app.router` is one object for the whole application; `useNavigation()` and `useApplication().router`
 return it. Its route fields (`params`, `route`, `uri`, `ok`, `meta`, `extend`, `fullPath`, `aliasOf`,
 `chain`, `direction`, `state`, `stack`) are read-only and reactive: `<h1>{() => this.nav.params.id}</h1>`
@@ -300,9 +310,10 @@ re-runs on navigation, also in a layout that stays mounted.
 
 - Read through the object: `const { params } = useNavigation()` or `const id = nav.params.id` keeps the
   value of that moment.
-- The route changes after the old page is removed and before the new page mounts (before the stack
-  transition), together with `scoped` services. The leaving page sees its own route in
-  `onDeactivated`/`onDisposing`; a page the router constructs sees the target route in its constructor
+- The route changes after the leaving page leaves the screen and before the new page mounts (before the
+  stack transition), together with `scoped` services. A page cached by `keepAlive` sees its own route in
+  `onDeactivated`; a disposed page's `onDisposing`/`onDisposed` run after the new page is painted and see
+  the target route; a page the router constructs sees the target route in its constructor
   and field initializers. Guards and route hooks (`useGuard`, `onEntering`, `onUpdate`) run before the
   change: use their context (`to`, `params`). A cancelled navigation keeps the route.
 - A cached `keepAlive` page keeps reading the current route while hidden, so its bindings re-run with

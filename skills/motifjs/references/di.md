@@ -17,8 +17,10 @@ instance. It behaves like the service (fields, methods, `#private`, `instanceof`
 to the right navigation's instance:
 
 - A layout that stays mounted moves to the new navigation's instance automatically; a binding such as
-  `{() => this.cart.items.length}` re-runs. The previous navigation's instance is disposed.
-- A page that left stays bound to its own navigation's instance, so work that finishes after an `await`
+  `{() => this.cart.items.length}` re-runs. The previous navigation's instance is disposed after the
+  page that left is disposed (the router disposes it after the new page is painted).
+- A page that left stays bound to its own navigation's instance, which is still alive in its
+  `onDisposing`/`onDisposed`, so work that finishes after an `await`
   (through a handle captured before it) never writes into the new page's service. A param change
   (`/p/1` → `/p/2`) and back/forward are new navigations.
 - A cached `keepAlive` page (and a page waiting in the mobile stack) keeps its navigation's instance alive

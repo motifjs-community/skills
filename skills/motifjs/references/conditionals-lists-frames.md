@@ -226,6 +226,7 @@ error in `cause`). An aborted load is never reported.
 ```
 Children of `TransportTo` are moved into the `Transport` slot with the same name and removed (and
 disposed) when the `TransportTo` is disposed; their bindings keep working against the sender's state.
+When the sender is a route page that is left, they leave the slot at once, before the page is disposed.
 Order does not matter: a `TransportTo` built before its slot delivers when the slot registers.
 `TransportTo` itself leaves an empty `<div>` in place. Children added later to the `TransportTo`'s
 `controls` go straight to the slot, stay alive there and are disposed with the sender like the initial
