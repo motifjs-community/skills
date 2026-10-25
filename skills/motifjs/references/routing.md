@@ -301,7 +301,8 @@ has one), mounts the new page and disposes the leaving page after the new page i
 target route and never delay the new page; the page keeps its navigation's `scoped` instances alive until
 it is disposed. `app.navigate` and `onRouterChanged` settle before that, and `app.dispose()` disposes pages
 still waiting. `keepAlive`, ready-instance and `singleton` pages and stack-kept pages are detached, not
-disposed.
+disposed. A navigation overtaken by a newer one disposes the pages it built but never showed, so a later
+visit builds a page for its own address (`keepAlive`, ready-instance and `singleton` pages are kept).
 
 `app.router` is one object for the whole application; `useNavigation()` and `useApplication().router`
 return it. Its route fields (`params`, `route`, `uri`, `ok`, `meta`, `extend`, `fullPath`, `aliasOf`,
