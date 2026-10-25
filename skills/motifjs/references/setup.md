@@ -37,6 +37,9 @@ export default defineConfig({
 
 Rollup: pass the same `compiler()` to a plain Rollup build; there is no separate Rollup or Babel plugin.
 Rollup has no mode of its own, so tell it about production builds: `compiler({ production: !process.env.ROLLUP_WATCH })`.
+The plugin strips types only in the `.tsx`/`.jsx` files it compiles: add `rollup-plugin-esbuild` (or `@rollup/plugin-typescript`)
+for plain `.ts` files and `@rollup/plugin-node-resolve` with `extensions: ['.tsx', '.ts', '.mjs', '.js']` for imports written
+without an extension or by package name.
 
 On Vite with Rolldown (Vite 8) the plugin also sets `optimizeDeps.rolldownOptions.transform.jsx` to `'preserve'` unless the app sets it, so the dependency scan reads `.jsx` files without looking for another JSX runtime.
 
