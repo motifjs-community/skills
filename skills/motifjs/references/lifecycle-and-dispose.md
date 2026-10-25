@@ -92,7 +92,9 @@ this.isDisposed;                                     // most methods become no-o
 ```
 
 `IDisposeOptions`: `skipLeaveTransition` makes `dispose()` skip the leave animation (`disposeAsync()`
-does not read it). `deep` (default `true`, passed on to the children) makes `disposeAsync()` clear the
+does not read it: it stops running animations and removes the element without a leave transition, and it
+is the path children take when their parent is disposed, so an animated child never holds its parent or a
+conditional branch back). `deep` (default `true`, passed on to the children) makes `disposeAsync()` clear the
 instance's own fields afterwards (`element`, `props`, `class`, `attr`, `motif.options`, every own
 property); `disposeAsync({ deep: false })` keeps them. `dispose()` clears them whatever `deep` says.
 

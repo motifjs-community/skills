@@ -24,7 +24,8 @@ to the right navigation's instance:
   (through a handle captured before it) never writes into the new page's service. A param change
   (`/p/1` → `/p/2`) and back/forward are new navigations.
 - A cached `keepAlive` page (and a page waiting in the mobile stack) keeps its navigation's instance alive
-  and moves to the current one when shown again. State that must survive navigations belongs in a
+  and moves to the current one when shown again, before its `onActivated` runs, so what `onActivated`
+  writes into the service stays in the current instance. State that must survive navigations belongs in a
   `singleton`.
 - A failed navigation (guard cancel, page constructor error) keeps the current instance.
 - `app.provider.createScope()` is outside this: it returns real instances that live only in that scope.
