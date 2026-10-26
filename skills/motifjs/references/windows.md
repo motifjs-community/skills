@@ -91,4 +91,4 @@ over IPC or `MessagePort`.
 
 `MJX418` the browser did not open the window (blocker, no gesture) · `MJX419` PiP missing or refused with
 `fallback: 'none'` · `MJX420` `add`/`focus` on a closed handle · `MJX421` `attach` got something that is not a
-window · `MJX422` a disposed component was given to a window.
+window, or a window of another origin · `MJX422` a disposed component was given to a window.
