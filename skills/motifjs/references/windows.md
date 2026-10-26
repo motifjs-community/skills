@@ -45,7 +45,9 @@ component gets `onDeactivated`, enters the window host through `controls.add` an
 does not fire again (it fires in the window's own task queue when it never fired before). Moving between
 windows keeps the origin. `release` and closing put the component back before the remembered sibling (or
 that sibling's own remembered sibling when it is in a window too), else at the end. No origin left → `orphans`:
-dispose (default) or keep detached (`closed.kept`).
+dispose (default) or keep detached (`closed.kept`). Only a component given through `open` or `add` has an origin:
+what the app moves into an attached window on its own is unknown to the manager, nothing is returned for it on
+close and `components` does not list it.
 
 ## Closing
 
