@@ -29,6 +29,7 @@ and the promise resolves once the content is placed. `open(c, o)` is `create(o)`
 | `orphans` | Content whose origin is gone when the window closes: `'dispose'` (default) or `'keep'`. |
 | `closeWhenEmpty` | Close when the last component is disposed (default `true`). |
 | `closeOnNavigate` | Close on every route change (default `false`). |
+| `returnOnClose` | Put content back to its origin on close (default `true`); `false` sends components with an origin through `orphans` too. |
 | `owner` | The window is registered in this component's dispose layer and closes with it. |
 | `onClosing` | `(e: { window, components, reason }) => void`, called right before the window is torn down, content still inside. See Closing. |
 
@@ -45,7 +46,8 @@ The first time a component is taken, the manager remembers its page parent and t
 component gets `onDeactivated`, enters the window host through `controls.add` and gets `onActivated`; `onMounted`
 does not fire again (it fires in the window's own task queue when it never fired before). Moving between
 windows keeps the origin. `release` and closing put the component back before the remembered sibling (or
-that sibling's own remembered sibling when it is in a window too), else at the end. No origin left → `orphans`:
+that sibling's own remembered sibling when it is in a window too), else at the end. `returnOnClose: false` turns
+this off (`release` still returns). No origin left → `orphans`:
 dispose (default) or keep detached (`closed.kept`). Only a component given through `open` or `add` has an origin:
 what the app moves into an attached window on its own is unknown to the manager, nothing is returned for it on
 close and `components` does not list it.
