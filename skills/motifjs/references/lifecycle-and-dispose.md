@@ -12,7 +12,7 @@
 | 6 | `initializeComponent(sender)` | right before `view()`; the compiler puts the code generated from JSX here | `sender.bindings.*` calls when building without JSX |
 | 6b | `oninitializeComponent(sender, e)` | right after all `initializeComponent` code (class method, tag value, compiler-generated), before `view()`; runs in order: class method, then tag props; on a function component tag it applies to the returned root | your own setup that must run after the compiler-generated setup (attributes, events, bindings and JSX children already exist) |
 | 7 | `onBuilt` | component + children built (element may still be inside a detached fragment) | wiring that does not need layout |
-| 8 | `onMounted` | once, in a later task after the element is attached to `document` (also when it already was); the screen may already be painted | only work that needs the element in the page and visible: focus, measure, a library that needs the element in the document; anything else goes in `onBuilt` |
+| 8 | `onMounted` | once, in a later task after the component is placed under a root that is in a document: the `run()` host or a `new Component(existingElement)` wrapper, every component on the way visible (also when the tree already was in the page); the screen may already be painted | only work that needs the element in the page and visible: focus, measure, a library that needs the element in the document; anything else goes in `onBuilt` |
 | – | `onActivated` / `onDeactivated` | an already built component is removed from the DOM without disposal (`onDeactivated`) and put back (`onActivated`): `keepAlive` route return, `controls.detach`/`silentDetach` then `controls.add` (incl. moving to another parent), `motif.hide()`/`motif.show()` (incl. `x-wait`/`x-display`), Virtualization rows scrolled out/in. Not on first appearance. Propagates to the visible subtree, parent first; a hidden child is activated by its own `motif.show()` | refresh data, pause timers |
 | – | `onVisibilityChanged` | when `motif.show()/hide()/toggle()` (incl. `x-wait`/`x-display`) changes visibility; it runs before `isVisible` is updated (on hide after the leave animation), so inside it `isVisible` still holds the previous value and `e.visible` (`VisibilityChangedEventArgs`) the new one | |
 | – | `onDisposing` | teardown begins | manual cleanup |
@@ -21,9 +21,9 @@
 1–2 run in the constructor. `onConfig` runs in the constructor for plain `Component` instances, but
 for **subclasses** (`class X extends Component`) it is deferred to the start of `build()` so that
 class fields (`state = reactive(...)`, injected services) are already initialized — it still runs
-before `onConfigured`. 4–7 run inside `build()`; `onMounted` fires when the element reaches `document`
-(same mechanism as `x:mounted`; the observer is released on dispose) and runs in a later task: the queue
-is processed in 8 ms slices, so many heavy mounts (wrapped widgets) do not block the page; the browser
+before `onConfigured`. 4–7 run inside `build()`; `onMounted` fires when the component is placed under a
+root that is in a document (same mechanism as `x:mounted`; a pending hook dies with the component) and runs
+in a later task on the root's window: the queue is processed in 8 ms slices, so many heavy mounts (wrapped widgets) do not block the page; the browser
 paints and handles input between slices. Children run before their parent; a component disposed before
 its turn is skipped. Every hook receives
 `(sender, e: { cancel: boolean })`. Hooks may be `async`. A subclass that is never built never

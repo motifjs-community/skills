@@ -32,7 +32,7 @@ export default class UserCard extends Component<HTMLDivElement, UserCardProps> {
 
   onConfigured() { this.class.add(() => this.props.highlighted ? 'card active' : 'card'); }
 
-  onMounted() { this.element.focus(); }                      // element attached to document (onBuilt may run detached)
+  onMounted() { this.element.focus(); }                      // placed under a root in the page (onBuilt may run detached)
 
   view() {
     return (
