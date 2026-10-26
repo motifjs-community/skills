@@ -182,8 +182,14 @@ reported).
 ## Scroll memory — `scrollMemory`
 
 Off by default. When enabled the router stores the scroll position of every visited path and puts it
-back when you return there (back/forward, link click, page reload — the positions live in
-`sessionStorage`). A hash in the URL wins over the stored position; a path seen for the first time
+back when you return there (back/forward, link click). The positions live in memory: they survive
+`restartRouter()` and are gone after a page reload; saving them is the app's job:
+`app.router.saveScrollPositions(fn)` calls `fn(positions)` whenever saving is due (leaving a page,
+`pagehide`, page hidden, `app.dispose()`) and returns an unsubscribe (the subscription survives a
+restart); `app.router.restoreScrollPositions(positions)` adds saved positions back (`limit` applies,
+callable before `run()`); `app.router.scrollPositions()` returns the current ones, the shown page's
+included, as `{ '/notes': 1200 }`. With `scrollMemory` off: `{}`, no-op, never called.
+A hash in the URL wins over the stored position; a path seen for the first time
 starts at the top; a per-navigation `scroll` option (`app.router.navigate('/x', { scroll: 'top' })`)
 overrides the memory (it scrolls the configured `container`, else the window; the page still records its position). Restoring, the top of a new page, an anchor reached from another page and
 back/forward scroll instantly even with CSS `scroll-behavior: smooth`; only an anchor link within the
@@ -196,7 +202,6 @@ app.useRouter({
     top: true,        // first visit starts at the top (default)
     anchor: true,     // an anchor (`#id`) wins over the stored position (default)
     settleMs: 1200,   // how long to keep re-trying while content is still rendering
-    persist: true,    // keep positions in sessionStorage (default)
     limit: 60,        // how many paths to remember
     key: (path) => (path === '/docs' ? '/docs/giris' : path),   // fold aliases into one key
     container: '#content',   // remember an inner scroller instead of the window (selector | element | () => element)
@@ -236,6 +241,14 @@ A layout (a route with `childs`) must render a `<RouterView/>` for every outlet 
 Until that outlet is built the child route is not mounted; after 3000 ms without it, dev mode warns
 `MJX301` (`RouterView outlet 'default' was not built within 3000 ms, so the route chain cannot be
 mounted.`).
+
+A `RouterView` built after the navigation finished (the layout swaps its outlet with `Frame.navigate`,
+or toggles `{cond && <RouterView/>}`) is filled with the shown route's component at once, without a
+navigation: guards, `onEntering`, `onEnter` do not run; `onShow` does. A page disposed with the old
+outlet is built again (the new one does not wait for the old outlet's leave transition). `keepAlive`,
+ready-instance, `singleton` and `scoped` pages are not disposed with their outlet; the same instance
+moves to the new one (`onDeactivated` then `onActivated`). An outlet removed with no replacement: those
+pages wait, no warning. A page that cannot be built: `MJX304` + error route.
 
 The router opens one DI scope per navigation; route components it builds resolve constructor deps,
 `inject()` and `getService()` from it, so a `scoped` service is one instance per navigation, shared by
@@ -284,14 +297,15 @@ nav.params.id;
 ```
 
 `force: true` re-runs middleware, guards and `onRouterChanged` for the address already shown (otherwise
-that navigation is skipped); the page is not rebuilt. `scroll`: `'top' | 'smooth' | 'instant' |
+that navigation is skipped); the page on screen is not rebuilt. `scroll`: `'top' | 'smooth' | 'instant' |
 { top, left, behavior }`, applied after the navigation, overrides `scrollMemory`.
 
 `app.navigate` resolves to a result: the shown route's `ResolveResult` (`ok: false` for not-found and
 error pages), `{ ok: true, skipped: true, uri }` when skipped, `{ ok: false, cancelled: true, reason }`
 when a guard or `onLeave` cancels (`reason`: `'guard'`, `'onLeave'` or the `onLeave` reason), and
-`{ ok: false, uri, cancelled: true, reason: 'middleware' }` when a middleware stops it. `app.router.navigate` and
-`app.router.navigateByName` resolve to the same result.
+`{ ok: false, uri, cancelled: true, reason: 'middleware' }` when a middleware stops it, and
+`{ ok: false, uri, cancelled: true, reason: 'restart' | 'dispose' }` when `restartRouter()` or `app.dispose()`
+overtakes it. `app.router.navigate` and `app.router.navigateByName` resolve to the same result.
 
 The new page never waits for the leaving page to be disposed. On a route change the router stops the
 leaving page's bindings and its components' `context.on` / `context.onRouterChanged` subscriptions, takes
@@ -367,13 +381,24 @@ entry; it is returned as `app.router.state` / `to.state` / event `state` again w
 with back/forward or reloads. Plain objects keep their fields (the router only adds its own key and
 strips it on read); non-plain values (`Date`, `Map`) are stored untouched.
 
-**Restart and dispose.** `app.restartRouter()` builds a fresh router and disposes the old one. It uses
+**Restart and dispose.** `app.restartRouter(uri?)` builds a fresh router and disposes the old one. It uses
 the latest `useRouter` config when `useRouter` was called again after `run()` (such a config only takes
 effect through `restartRouter()`; until then the running router keeps the page, navigation and route
-fields on the old table), otherwise the current config. It restarts at the current address
-(`shell` mode: the page the router shows, `/` if it never navigated); the route table is rebuilt, the
-`keepAlive` cache and stack-kept pages are disposed, the page is rebuilt, no history entry is added, and
-`onRouterChanged` fires with `initial: true`, `direction: 'initial'`. Before `run()` it does nothing.
+fields on the old table), otherwise the current config. It starts at the root (`/`), or at `uri` when given;
+the old table's address is never carried over. When the address bar changes the current history entry is
+replaced (no entry is added) and the entry `state` is dropped; at the same address the state is kept;
+`shell` mode leaves the address bar alone. The route table is rebuilt, the `keepAlive` cache and
+stack-kept pages are disposed; `scrollMemory` positions are kept. The page and layout on screen leave like a leaving page (bindings stop at
+once, leave transitions play, the new page is set up after them, cleanups run once the new page is on
+screen); a layout given as an instance or as a `singleton` at the same place in the new table stays in
+place without `onDeactivated` / `onActivated`. The route fields switch in one step after the leaving page
+is removed. Guards run on this startup navigation (`from: null`, `direction: 'initial'`; `app.router`
+still shows the old route): a redirect is applied and replaces the entry; a cancel does not undo the
+restart, it only shows no page: the old page leaves with its transition, then the route fields empty
+(`uri` `''`, `ok` `false`), the address bar stays and `onRouterChanged` does not fire. `onLeave` does not
+run. `onRouterChanged` fires with `initial: true`, `direction: 'initial'`. It returns the startup
+navigation's result (`reason: 'restart' | 'dispose'` when overtaken). Before `run()` it does nothing and
+returns `undefined`.
 `app.dispose()` also disposes the router and resets the address only in the mode the router owns: `history` → `/` via `replaceState`,
 `hash`/`file` → only the `#` part is cleared, `shell` or no router → untouched (no new history entry). `await app.dispose()` resolves once the pages, the `RouterView`,
 the `run()` shell and then the services are disposed; the host element stays in the page and can host a new `run()`.

@@ -79,8 +79,10 @@ through `this.context`; in a component write
 
 ## Scroll and viewport
 
-- `scrollMemory` (off by default) restores the scroll position per path on back/forward, link and
-  reload, from `sessionStorage`; `container` targets an inner scroller instead of the window. When on,
+- `scrollMemory` (off by default) restores the scroll position per path on back/forward and link; the
+  positions live in memory (kept across `restartRouter()`, lost on reload — save them with
+  `app.router.saveScrollPositions(fn)` and put them back with `restoreScrollPositions`); `container`
+  targets an inner scroller instead of the window. When on,
   `history.scrollRestoration` is `'manual'`. Options in routing.md.
 - `stack` restores the inner scroll positions of a kept page when it returns.
 - `Virtualization` re-renders its window when its scroll container's height changes (rotation,

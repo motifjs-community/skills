@@ -24,12 +24,15 @@ app.router.evict(nameOrRoute?): Promise<void>      // release cached keepAlive i
 app.router.resolve(uri): RouteResolution              // match without navigating: { chain: string[] (like router.chain), result: ResolveResult (what navigate returns; result.chain: RouteItem[]) }
 app.router.href(name, params?): string               // path of a named route (throws MJX302 for an unknown name)
 app.router.routes: RouteInfo[]                        // route table in definition order: { fullPath, name, meta, route, chain }
+app.router.scrollPositions(): Record<string, number>   // scroll memory positions { '/notes': 1200 }, shown page included; {} while scrollMemory is off
+app.router.restoreScrollPositions(positions): void    // add saved positions back (limit applies; callable before run()); no-op while off
+app.router.saveScrollPositions(fn): () => void        // fn(positions) whenever saving is due (leaving a page, pagehide, hidden, app.dispose()); survives restartRouter; returns unsubscribe
 app.on(event, handler) → unsubscribe fn; app.off(event, handler); app.fire(event, args?)
 app.onRouterChanged((e: RouterNavigatedEventArgs) => …) → unsubscribe fn   // { uri, params, meta, route, ok, initial, redirectedFrom?, direction, state }; every navigation incl. initial + 404
 app.onLifecycle(({ state, visible, online }) => …) → unsubscribe fn   // state: 'visible'|'hidden'|'frozen'|'resumed'|'restored'|'online'|'offline'; listeners installed lazily, removed by app.dispose(); never tied to a component, also not through this.context: call the unsubscribe yourself
 app.isVisible; app.isOnline
 app.useDevelopment(bool = true); app.useLogging(bool = true); app.useReactiveMonitor({ enabled, threshold, name })
-app.isDevelopmentModeEnabled; app.restartRouter() (builds a fresh router from the latest useRouter config and restarts at the current address/shown page: routes, keepAlive cache, stack and scroll memory reset; page rebuilt; onRouterChanged fires with initial: true; no-op before run)
+app.isDevelopmentModeEnabled; app.restartRouter(uri?): Promise<result> (builds a fresh router from the latest useRouter config and starts it at '/' or at uri, replacing the history entry: routes, keepAlive cache and stack reset, scroll memory kept; the shown page leaves like a leaving page, a given/singleton layout at the same place stays; guards run, a cancel leaves the screen empty; onRouterChanged fires with initial: true; resolves to the startup navigation's result, undefined before run)
 app.provider: ServiceProvider; app.getAppShell(): Component; app.dispose(): Promise<void>   // sync: state 'disposing', router, lifecycle listeners, address reset by mode (history '/', hash/file clears '#', shell/no router untouched); then pages (leave animations), RouterView, run() shell, LAST the provider (async disposes awaited) and Application.main = null; components keep seeing services/context until then; a second call returns the same promise; the host element stays
 app.state: 'initializing' | 'running' | 'disposing' | 'disposed'   // a new CreateBuilder() is allowed while the previous app is 'disposing'; its torn-down pages still resolve their own app
 app.insert(c) / app.attach(c)  // add to the app shell; app.remove(c) (dispose) / app.detach(c) (no dispose); app.appendToMainHost(node)
