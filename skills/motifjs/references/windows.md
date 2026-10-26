@@ -30,6 +30,7 @@ and the promise resolves once the content is placed. `open(c, o)` is `create(o)`
 | `closeWhenEmpty` | Close when the last component is disposed (default `true`). |
 | `closeOnNavigate` | Close on every route change (default `false`). |
 | `owner` | The window is registered in this component's dispose layer and closes with it. |
+| `onClosing` | `(e: { window, components, reason }) => void`, called right before the window is torn down, content still inside. See Closing. |
 
 ## The handle (`AppWindow`)
 
@@ -55,6 +56,14 @@ User close, `win.close()` or the window's `pagehide` → content returns, `close
 by the app drops out of the window; an empty window closes unless `closeWhenEmpty: false`. `owner` disposed →
 closes. `closeOnNavigate` → closes on navigation. `app.dispose()` and the page's own `pagehide` close every
 window and dispose their content; `app.windows.closeAll()` does it on demand.
+
+`onClosing` runs first, before anything is moved: at the window's `pagehide` on a user close, before the host is
+disposed otherwise. The window already counts as closed (`isOpen` false, `add` throws `MJX420`) but its document is
+still there. `e.components` is a copy of what is in the window; `e.reason` is `'user'` (closed by the user or
+`pagehide`), `'code'` (`close()` / `closeAll()`), `'owner'`, `'empty'`, `'navigate'` or `'page'` (the page unloads or
+`app.dispose()`). A component the hook gives another parent (`controls.add`) is neither returned nor disposed, its
+origin is forgotten and it is missing from `closed`; `win.release` works there too. A throwing hook is reported as
+`MJX423` and the close goes on.
 
 ## Styles and theme
 
@@ -93,4 +102,5 @@ over IPC or `MessagePort`.
 
 `MJX418` the browser did not open the window (blocker, no gesture) · `MJX419` PiP missing or refused with
 `fallback: 'none'` · `MJX420` `add`/`focus` on a closed handle · `MJX421` `attach` got something that is not a
-window, or a window of another origin · `MJX422` a disposed component was given to a window.
+window, or a window of another origin · `MJX422` a disposed component was given to a window · `MJX423` `onClosing`
+threw (reported, the close goes on).
