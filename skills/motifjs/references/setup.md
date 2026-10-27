@@ -71,7 +71,7 @@ app.useReactiveMonitor({ enabled: true, threshold: 200, name: 'app' });
 
 ```ts
 compiler({
-  diagnostics: false,        // silence the MJX001–MJX004, MJX007, MJX015 and MJX016 compile-time warnings (default: on)
+  diagnostics: false,        // silence the MJX001–MJX004, MJX007 and MJX015–MJX018 compile-time warnings (default: on)
   explain: 'pages/Home',     // print "what did this expression compile to" for matching files
                              //   true = every file; string = path includes; RegExp = test(id)
   exclude: 'legacy/',        // files the plugin leaves alone (string = path includes; RegExp = test(id); (id) => boolean); their JSX goes to Vite's own transform; a production build still strips their dev-only code

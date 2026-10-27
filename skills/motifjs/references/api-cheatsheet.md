@@ -287,7 +287,11 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 
 Compiler (`@motifx/compiler`): warnings `MJX001` (block-bodied arrow with parameters in child position declares locals the
 branches cannot see), `MJX002` (camelCase DOM event name on a component tag), `MJX003` (`.map()` item without
-`key`), `MJX004` (`some`/`every`/`find`… inside a reactive getter), `MJX007` (unknown `x-*` directive, passed on
+`key`), `MJX004` (a reactive getter scans a reactive list by key: `find`/`findIndex`/`some`/`every` with an `x.field === value`
+predicate; n components doing this cost n² reads per change, keep a keyed map or read with `untracked`), `MJX017` (a reactive
+getter writes a reactive value it also reads: `++`, `+=` or an assignment to a field read elsewhere in the getter; it retriggers
+itself; plain class fields and fields the getter never reads are fine), `MJX018` (`sort`/`reverse` on a reactive list inside a
+reactive getter, or `push`/`pop`/`shift`/`unshift`/`splice` when the getter also reads that list; work on a copy), `MJX007` (unknown `x-*` directive, passed on
 as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method/accessor that does not reach
 `super` on every path; also checked in `.ts`/`.js` files, base followed across files), `MJX016` (a `switch` or
 `return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`

@@ -115,8 +115,10 @@
   `ReferenceError`), `MJX002` (camelCase DOM event name on a component tag — `<Comp onChange>` binds
   a DOM listener, not a callback prop; lowercase `<Button onclick>` is the deliberate spelling and is
   never warned), `MJX003` (`.map()` item without `key`; rows are matched by the item object, so the key only feeds the
-  `MJX202` duplicate check), `MJX004` (`some`/`every`/`find` on a `this.`
-  rooted array inside a reactive getter loses dependencies), `MJX007` (unknown `x-*` name; it is passed on
+  `MJX202` duplicate check), `MJX004` (a reactive getter looks an item up by scanning a reactive list with
+  `find`/`findIndex`/`some`/`every` and an `x.field === value` predicate: n components → n² reads per change; use a keyed
+  map or `untracked`), `MJX017` (a reactive getter writes a reactive value it also reads; it retriggers itself), `MJX018`
+  (`sort`/`reverse` on a reactive list inside a getter, or `push`/… when the getter also reads the list; sort a copy), `MJX007` (unknown `x-*` name; it is passed on
   as an `on<name>` prop), `MJX015` (a class component override of `build`/`dispose`/`style`/… that
   can finish without reaching `super`; checked in `.ts`/`.js` files too), `MJX016` (a `switch` or
   `return a ? b : c` getter the compiler cannot lower — non-literal `case` label, `return` or JSX before the
