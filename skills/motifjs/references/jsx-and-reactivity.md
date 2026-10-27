@@ -364,6 +364,40 @@ first, then its children. A path written directly (`{i18n.dict.title}`, `binding
 a getter slot (`{() => i18n.dict.title}`) reads the new one. A binding that throws while refreshing is
 reported as `MJX208` and the remaining ones still run.
 
+## The list-scan trap (n² dependencies)
+
+A row that holds only an id and finds its item in a getter, `{() => notes.items.find((n) => n.id === props.id)?.title}`,
+subscribes to the `id` of every item it passes: n dependencies for one row, n² for n rows. Any `push`, id change or list
+replacement reruns every row, and every row scans the whole list again. Measured with 2000 rows over 2000 items: two million
+subscriptions, 1.2 s to set up, 1 s for a single `push`. The scan itself is cheap; the subscriptions are the cost.
+`includes`/`indexOf` read no item field and are not affected; "scanning the whole list" (`filter(...).length`) makes it worse.
+
+How it shows: the compiler warns `MJX004` on `find`/`findIndex`/`some`/`every` with an `x.field === value` predicate inside
+a reactive getter; at run time an effect that tracks more than 1000 dependencies in one run warns `MJX209`, naming the owner
+component and binding when devtools are on; the DevTools inspector lists the dependency count of each effect.
+
+Avoid it, in this order:
+
+1. Hand the row its item, not its id: `{notes.items.map((note) => <NoteRow note={note} />)}`; the row reads
+   `props.note.title` and subscribes to that one field.
+2. When only an id is available, keep a keyed index in the store and read `byId(id)`: a reactive `Map` subscribes the row
+   to its key only, and a change wakes only that key's readers.
+
+   ```ts
+   const state = reactive({ items: [] as Note[], byId: new Map<number, Note>() });
+   export const notes = {
+     get items(): readonly Note[] { return state.items; },
+     byId(id: number) { return state.byId.get(id); },
+     add(note: Note) { state.items.push(note); state.byId.set(note.id, note); },
+     remove(id: number) { const i = state.items.findIndex((n) => n.id === id); if (i >= 0) state.items.splice(i, 1); state.byId.delete(id); },
+   };
+   ```
+
+   For a list that rarely changes a computed index does: `const index = createComputed(() => new Map(state.items.map((n) => [n.id, n])))`;
+   one scan per change, rows read `index.value.get(id)` and rerun once per change with a single read each.
+3. When no subscription is wanted, read the list with `untracked(() => notes.items.find(...))`; another dependency has to rerun
+   the getter.
+
 ## Gotchas
 
 - Reading a reactive field **outside** a getter in `view()` captures a snapshot: `const n = this.state.count; <p>{n}</p>` never updates.
@@ -376,8 +410,7 @@ reported as `MJX208` and the remaining ones still run.
 - Array reads subscribe to the array once, not per index: `find`, `findIndex`, `some`, `every`, `filter`, `map`,
   `forEach`, `reduce`, `join`, `slice`, `includes`, `indexOf`, the iterators, `for...of` and spread. A write to an
   index or the length and the structural methods wake the reader once; the fields the callback reads on items
-  (`item.id`) subscribe to those items as well, so n rows each scanning an n-item list still hold n² item
-  dependencies: look items up by key instead of scanning in every row.
+  (`item.id`) subscribe to those items as well — see *The list-scan trap* above.
 - `createComputed` recomputes on the next microtask, so a synchronous read right after a write may see
   the previous value; `createLazyComputed` is marked dirty synchronously and recomputes on read.
 - Replacing a whole array (`state.items = newArr`) is fine: rows are matched by item object identity,

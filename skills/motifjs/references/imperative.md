@@ -171,14 +171,14 @@ it with this key: `_mc` = `motifComponent`, `_mf` = `motifFragment`, `_mfc` = `F
    `Component<HTMLDivElement>` class in a file the Motif Vite plugin does not process (a library compiled with
    plain `tsc`); write `static elementTag` or call `super('div')` there. Returning a wrapper from `view()`
    does not give the component an element: it stays a fragment and the wrapper is its first child.
-2. **Errors inside `initializeComponent` are swallowed** (`MJX122`, SKILL.md rule 14): the element
+2. **Errors inside `initializeComponent` are swallowed** (`MJX122`, SKILL.md rule 15): the element
    renders empty and `console.error` is the only sign. Typical cause: a `const` that shadows a helper used
    in its own setup (`const text = motifComponent('p', (p) => p.controls.add(text('…')))` calls the
    component, not the helper, when the setup runs at build). `motifComponent` returns `any`, so the type
    checker does not see it. In tests, assert the rendered text or spy on `console.error`.
 3. **`display` / `wait` in the wrong hook.** Registered in `initializeComponent` the hidden element is
    built once; register them in `preconfig`.
-4. **No compiler, no diagnostics.** `MJX001`–`MJX005`, `MJX016` and the switch/ternary getter rule (SKILL.md rule 5) concern
+4. **No compiler, no diagnostics.** `MJX001`–`MJX005`, `MJX016` and the switch/ternary getter rule (SKILL.md rule 6) concern
    JSX only; nothing warns about a `.map()` without `indexkey` or a prop that should be a getter. A plain
    expression in a branch (`motifComponent(Badge, { count: state.n })`) is a snapshot, exactly as in JSX;
    pass `count: () => state.n`.

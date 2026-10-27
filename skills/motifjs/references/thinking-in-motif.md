@@ -105,6 +105,9 @@ is therefore designed around identity from the start:
   rebuilt". It is a decision, not the default way to update.
 - A reactive object holds data. Callbacks stay outside it: a template slot calls a function value with
   no arguments.
+- A row is handed its object, never an id to look up by scanning the list: a per-row `find` subscribes the
+  row to every item, n² subscriptions for n rows. Where an id is all you have, the store keeps an index
+  (`Map` by id) next to the list and rows read it by key.
 
 ## 5. Rebuild or fill in place
 

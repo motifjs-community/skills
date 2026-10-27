@@ -14,6 +14,7 @@
 | `this.motif.setDisposable(this.context.on(…))` | just `this.context.on(…)` | subscriptions through `this.context` are already tied to the component |
 | `key={index}` | `key={item.id}` | rows are matched by the item object, not by key; an index does not identify the item, so the duplicate-key check (`MJX202`) tells you nothing |
 | `string[]` lists | `{ id, text }[]` | primitives lack identity |
+| A row finds its item by id in a getter: `items.find((x) => x.id === props.id)` | hand the row the item (`<Row item={item}/>`), or a keyed `Map` in the store read with `byId(id)` | fine-grained tracking subscribes the row to every item's `id`: n rows → n² subscriptions, every change reruns every row; `MJX004` at compile time, `MJX209` at run time |
 | Returning arrays of JSX from helpers each render | Build once; mutate reactive data | there is no re-render |
 | Cleanup in `componentWillUnmount` only | `this.motif.setDisposable(fn)` in the same place you create the resource | resources registered anywhere are disposed |
 | `await nextTick(); expect(dom)` after `controls.add` | not needed; insertion is synchronous | but reactive *updates* flush on a microtask |
