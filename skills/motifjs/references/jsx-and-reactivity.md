@@ -371,6 +371,11 @@ reported as `MJX208` and the remaining ones still run.
   read such as `state.items.length` still does). `sort` is not one of them: it reads and writes the array in
   place, so `state.items.sort()` inside an effect retriggers the effect until `MJX203`; sort inside
   `untracked(...)` or sort a copy (`[...state.items].sort()`).
+- Array reads subscribe to the array once, not per index: `find`, `findIndex`, `some`, `every`, `filter`, `map`,
+  `forEach`, `reduce`, `join`, `slice`, `includes`, `indexOf`, the iterators, `for...of` and spread. A write to an
+  index or the length and the structural methods wake the reader once; the fields the callback reads on items
+  (`item.id`) subscribe to those items as well, so n rows each scanning an n-item list still hold n² item
+  dependencies: look items up by key instead of scanning in every row.
 - `createComputed` recomputes on the next microtask, so a synchronous read right after a write may see
   the previous value; `createLazyComputed` is marked dirty synchronously and recomputes on read.
 - Replacing a whole array (`state.items = newArr`) is fine: rows are matched by item object identity,
