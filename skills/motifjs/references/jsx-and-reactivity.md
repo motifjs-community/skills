@@ -33,7 +33,9 @@ effect that also reads a value written in the same flush by another effect or by
 again in the next round of that microtask: depending on creation order its first run may see the old value,
 its last run sees the current ones, and the final state does not depend on creation order. An effect that
 runs 50 times in one flush (it writes what it reads, e.g. `state.n++`) is skipped for the rest of that flush
-and raises the `MJX203` dev warning; wrap the write in `untracked(...)`.
+and raises the `MJX203` dev warning; wrap the write in `untracked(...)`. An effect that tracks more than 1000
+dependencies in one run raises `MJX209` once (owner named when devtools are on): it is scanning a reactive list;
+look items up by key or read the list with `untracked(...)`; `useReactiveMonitor({ dependencies })` sets the limit.
 
 Module-level stores are idiomatic:
 
