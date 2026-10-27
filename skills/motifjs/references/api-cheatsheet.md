@@ -37,11 +37,13 @@ app.connectDocument(doc: Document): () => void   // same-origin popup/iframe doc
 app.windows: WindowManager   // open(component, options?): Promise<AppWindow> (= create + add; call inside a user gesture) · create(options?) · attach(window, options?) · of(component): AppWindow | null · supports('popup' | 'pip') · closeAll() · list (reactive) · events 'window-opened' / 'window-closed' { window }
   // options: kind 'popup' | 'pip', fallback 'popup' | 'none', width, height, left, top, name (Electron frameName), features, title, styles 'live' | 'once' | 'none' | (doc) => void, orphans 'dispose' | 'keep', closeWhenEmpty, closeOnNavigate, returnOnClose (false: content with an origin follows orphans too), owner, onClosing(e: { window, components, reason: 'user' | 'code' | 'owner' | 'empty' | 'navigate' | 'page' }) — before teardown, content still in the window; what it moves to another parent is neither returned nor disposed
   // AppWindow: window, document, host, kind ('popup' | 'pip' | 'attached'), components, isOpen, add(...c), release(c), focus(), close(): Promise<{ returned, disposed, kept }>, closed, syncStyles(); MJX418 not opened, MJX419 pip missing/refused, MJX420 closed handle, MJX421 not a window or another origin, MJX422 disposed component, MJX423 onClosing threw (reported)
+app.layer: Component   // page layer: a plain <div> at the end of <body>, after the run() host, created on first read; no styles/attributes from the core (add class/attr yourself); readable before run() (joins at DOMContentLoaded while body is missing, content mounts then); a root like the shell (parent null); app.dispose() disposes it with its content and removes the element
+app.layerOf(target?, ...components): Component   // layer of the document holding target (component or DOM node): a window's host when it lives in a window from app.windows, else app.layer; no/null target → app.layer; the components are controls.add-ed there and the layer is returned; a parentless first component counts as content (this.context.layerOf(this, toast) → the component's window or the page, this.context.layerOf(toast) → the page); MJX424 when target is neither a component nor a node
 app.provider: ServiceProvider; app.getAppShell(): Component; app.dispose(): Promise<void>   // sync: state 'disposing', router, lifecycle listeners, address reset by mode (history '/', hash/file clears '#', shell/no router untouched); then pages (leave animations), RouterView, run() shell, LAST the provider (async disposes awaited) and Application.main = null; components keep seeing services/context until then; a second call returns the same promise; the host element stays
 app.state: 'initializing' | 'running' | 'disposing' | 'disposed'   // a new CreateBuilder() is allowed while the previous app is 'disposing'; its torn-down pages still resolve their own app
 app.insert(c) / app.attach(c)  // add to the app shell; app.remove(c) (dispose) / app.detach(c) (no dispose); app.appendToMainHost(node)
 useNavigation(): Router   // the same object as app.router; read nav.params.id live, destructuring keeps that moment's value
-useApplication(): { application, services, router, attach(...components) }   // application = Application.main
+useApplication(): { application, services, router, windows, layer, layerOf, attach(...components) }   // application = Application.main
 ```
 
 Inside a component `this.context` is the application seen through a component-scoped view:
@@ -122,18 +124,23 @@ asyncTracking                                                    // emitted arou
 Devtools: `app.useDevelopment(true)` is the only switch. It turns on development mode (dev warnings, the route
 linter) and devtools together; `useDevelopment(false)` turns both off. A URL parameter or a global set by hand never
 turns devtools on. While devtools are on, `globalThis.__MOTIF_DEVTOOLS__` holds the contract object, typed
-`MotifDevtools` from `@motifx/core/devtools` (`version: 1` follows the core major). An external devtools panel
-connects through it. Components have no ids: a path is the list of `controls` indexes from the app shell (`[]` is
-the shell); paths shift when lists change, which `tree:changed` reports.
+`MotifDevtools` from `@motifx/core/devtools` (`version: 2`). An external devtools panel
+connects through it. Components have no ids: the tree is a forest. `[]` is a virtual `Application` node, `path[0]`
+picks a root (0 the `run()` shell, then `app.layer` as `Layer` once it exists, then the `host` of every `app.windows`
+window as `Window`, in `app.windows.list` order) and the rest are `controls` indexes down from that root; a component
+under no root has path `null`. Paths shift when lists change and when a root comes or goes, which `tree:changed`
+reports (`[]` for the root list).
 
 ```ts
 on(fn) => off                         // fn({ type, payload })
-getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, childCount, children? }; type = class name or function name
+getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, waiting, disposed, connected, document, childCount, children? }; type = class name or function name
+                                      // [] is { type: 'Application', tag: '#roots' }; a window root carries title; document = index into getDocuments() (0 = the page), kept for a component whose element the app moved to another document
                                       // a .map() list shows as List (its place) > ListItems (the item range) > items
                                       // conditions show as Ternary / When / Expression / Switch holding the content, or Empty; x-wait adds nothing
-coreVersion                           // version of @motifx/core, next to version (the contract version, 1)
-getElement(path) / pathOfElement(node)
-inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions
+coreVersion                           // version of @motifx/core, next to version (the contract version, 2)
+getElement(path) / pathOfElement(node) // in any document of the app; null for [] and for a node under no root
+getDocuments()                        // the page document first, then the connected ones (app.windows windows, connectDocument); documents:changed says when to reread
+inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions, window (window roots only: { kind, title, open, components })
 readValue(path, 'props' | 'functionProps' | 'fields', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
                                       // a signal or computed previews as { kind: 'signal', type, value, stale? }; paths continue into its value
 readStore(id, keys)                   // same, for a store from getStores()
@@ -148,13 +155,13 @@ getStores()                           // stores still in use: { id, name, file?,
                                       // early stores kept in a component or service field are found by the scan; stores kept only in a closure are not
                                       // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
-setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)
+setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)   // setVisible on a root → { ok: false }
 writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreValue(id, keys, value)
                                       // writes go through public APIs; result { ok, value? } | { ok: false, error }
 ```
 
-Events: `tree:changed`, `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
-`component:disposed` (payloads carry `{ path, type, tag }`), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`), `stores:changed` (new stores recorded, once per turn), `scopes:changed` (a DI scope opened, committed or disposed, once per turn),
+Events: `tree:changed` (`parents`; `[]` when the root list changed), `documents:changed` (reread `getDocuments()`), `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
+`component:disposed` (payloads carry `{ path, type, tag }`; `path` is `null` under no root), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`), `stores:changed` (new stores recorded, once per turn), `scopes:changed` (a DI scope opened, committed or disposed, once per turn),
 `service:created` (`{ scope, token, lifetime, source: 'class' | 'factory' | 'value', instance }`; transients on every resolution), `service:disposed` (`{ scope, token, lifetime, instance }`),
 `route:navigation-start`, `route:navigation-end` (`outcome`: `done`, `skipped`, `cancelled`, `notFound`, `error`),
 `warning`, `error:caught`, `ext:<name>:<type>`. There is no mounted event; read `connected` from the tree.

@@ -38,7 +38,9 @@ and the promise resolves once the content is placed. `open(c, o)` is `create(o)`
 `window`, `document`, `host` (the component wrapping the window body), `kind` (`'popup' | 'pip' | 'attached'`,
 what really opened), `components`, `isOpen`, `add(...c)`, `release(c)` (back to its origin, window stays open),
 `focus()`, `close()` → `{ returned, disposed, kept }`, `closed` (the same promise however the window closes),
-`syncStyles()`.
+`syncStyles()`. A toast or dialog opened by a component in the window belongs in that window:
+`this.context.layerOf(this, dialog)` adds it to the window's `host` when the component's element is in a managed
+window, to `app.layer` (the page layer, a plain `div` at the end of `body`) otherwise.
 
 ## Origin and return
 
