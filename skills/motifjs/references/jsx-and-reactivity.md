@@ -370,9 +370,10 @@ reported as `MJX208` and the remaining ones still run.
 ## The list-scan trap (n² dependencies)
 
 A row that holds only an id and finds its item in a getter, `{() => notes.items.find((n) => n.id === props.id)?.title}`,
-subscribes to the `id` of every item it passes: n dependencies for one row, n² for n rows. Any `push`, id change or list
-replacement reruns every row, and every row scans the whole list again. Measured with 2000 rows over 2000 items: two million
-subscriptions, 1.2 s to set up, 1 s for a single `push`. The scan itself is cheap; the subscriptions are the cost.
+subscribes to the `id` of every item it passes: n dependencies for one row, n² for n rows. An id change reruns every row
+that scanned past it and a list replacement reruns every row, each scanning the list again; a `push` wakes only the rows
+that found no match. Measured with 2000 rows over 2000 items: two million subscriptions, 1.2 s to set up, 0.8 s for one id
+change, 4 s to replace the list. The scan itself is cheap; the subscriptions are the cost.
 `includes`/`indexOf` read no item field and are not affected; "scanning the whole list" (`filter(...).length`) makes it worse.
 
 How it shows: the compiler warns `MJX004` on `find`/`findIndex`/`some`/`every` with an `x.field === value` predicate inside
@@ -414,8 +415,10 @@ Avoid it, in this order:
   `untracked(...)` or sort a copy (`[...state.items].sort()`).
 - Array reads subscribe to the array once, not per index: `find`, `findIndex`, `some`, `every`, `filter`, `map`,
   `forEach`, `reduce`, `join`, `slice`, `includes`, `indexOf`, the iterators, `for...of` and spread. A write to an
-  index or the length and the structural methods wake the reader once; the fields the callback reads on items
-  (`item.id`) subscribe to those items as well — see *The list-scan trap* above.
+  index or the length and the structural methods wake the reader once. A lookup that stops at a match (`find`, `findIndex`,
+  `some`, `every`, `indexOf`, `includes`) depends only on the prefix it read: a write, an insertion or a `push` beyond the
+  index where it stopped does not wake it; a lookup without a match and `findLast`/`findLastIndex` depend on the whole list.
+  The fields the callback reads on items (`item.id`) subscribe to those items as well — see *The list-scan trap* above.
 - `createComputed` recomputes on the next microtask, so a synchronous read right after a write may see
   the previous value; `createLazyComputed` is marked dirty synchronously and recomputes on read.
 - Replacing a whole array (`state.items = newArr`) is fine: rows are matched by item object identity,
