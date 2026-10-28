@@ -148,7 +148,7 @@ If a minimal reproduction shows that MotifJS, not the app, behaves against this 
 | Component anatomy: constructor forms, props/childs, controls, refs, context, elementTag | `references/components.md` |
 | Views without JSX: `motifComponent` call shapes, text nodes, `preconfig`, fragments for branches and lists, class pages in `.ts`, reading compiled output | `references/imperative.md` |
 | JSX expression forms, attributes, `x-*` props, reactive primitives, bindings API | `references/jsx-and-reactivity.md` |
-| `x-wait`/`x-display`, `&&`, ternary, `.map`, `switch`, `Frame`, `Lazy`, `Transport` slots | `references/conditionals-lists-frames.md` |
+| `x-wait`/`x-display`, `&&`, ternary, `.map`, `x-chunk`, `switch`, `Frame`, `Lazy`, `Transport` slots | `references/conditionals-lists-frames.md` |
 | DOM/component/app events, forms, two-way binding | `references/events-and-forms.md` |
 | Lifecycle order, show/hide, isWait, dispose, memory rules, wrapping third-party libraries | `references/lifecycle-and-dispose.md` |
 | Routes, params, guards, `RouterView`, `RouterLink`, navigation | `references/routing.md` |

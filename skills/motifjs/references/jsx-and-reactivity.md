@@ -283,6 +283,7 @@ not have.
 | `x-foo` (unknown) | Passed as the prop `onfoo`; compiler warning `MJX007`. `x-bind`, `x-focus`, `x-list`, `x-loop`, `x-effect`, `x-reload`, `x-interrupt`, `x-to` are compile errors (`MJX006`). |
 | `x-wait={() => bool}` | While `true`, the component is held back from the DOM. |
 | `x-display={() => bool}` | Show/hide (uses `hideStrategy`). |
+| `x-chunk={200}` | Builds the element's children in slices: the first 200 added together build at once, the rest leave a `<!--h-->` trace and build 200 per frame in order; `.map` rows under it are created only on their turn, with the index they have then. A number, not a getter (`MJX012` otherwise); `options: { chunk: 200 }` in code. |
 | `x-style={...}` | Same as `style` (compiles to `sender.style(...)`; getter live). |
 | `x-config`, `x-configured`, `x-building`, `x-built`, `x-mounted`, `x-activated`, `x-deactivated`, `x-disposing`, `x-disposed`, `x-initializing`, `x-initialized`, `x-visibilitychanged` (or `x:config`…, `onConfig`, `onBuilt`, `onMounted`, …) | Lifecycle hooks as props. Several spellings of one hook on the same tag (`onBuilt` + `x-built` + `x:built`) are merged: all of them run once, in source order. On a function component tag every spelling reaches the returned root; `initializing`/`initialized` fire right after the root is constructed, in the class tag order (`ref` → `initializing` → `initialized` → `config`). |
 | `key` | Identifies a list item; duplicates raise the `MJX202` dev warning. Rows are matched by the item object, so `key` does not change DOM reuse. |
@@ -290,7 +291,7 @@ not have.
 | `options={{ hideStrategy, disableDisposal }}` | Copied into the tag's `motif.options` (plain DOM tags and component tags); no attribute is written. |
 | `initializeComponent={(s) => ...}` | Called once with the tag's component as `sender`, during build right before `view()` (a tag held by `x-wait` runs it on its first show); good place for `s.bindings.*` calls. Same meaning and timing on plain DOM tags, class component tags and function component tags (the returned root). The compiler emits its own `initializeComponent` for the tag's attributes, events, directives and children; both run: the component's method, then the tag's, then the compiled one. With JSX you rarely write it; it is mainly for building components without JSX. |
 
-On every directive (including `x-wait`/`x-display`) a variable or member holding a function is called as the
+On every directive but `x-chunk` (`x-wait`/`x-display` included) a variable or member holding a function is called as the
 getter, with `this` for a method: `x-display={isAuthor}`, `x-wait={this.isLoading}`, `x-text={this.label}`.
 
 ## The bindings API (`this.bindings` / `sender.bindings`)

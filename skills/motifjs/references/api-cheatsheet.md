@@ -82,7 +82,7 @@ isBuilt, isInitialized (false in onInitializing, true from onInitialized on), is
 motif.on(event, cb, domEvent = true): Promise<this>; motif.off(event, cb): Promise<this>; motif.trigger(event, args): Promise<this>; motif.addHandler(event, handler)
 motif.show(): Promise; motif.hide(): Promise; motif.toggle()
 motif.clear(): Promise; motif.register(d: IDisposable); motif.setDisposable(fn); motif.stopAnimations(): Promise<void>
-motif.options                                          // transition, hideStrategy, disableDisposal
+motif.options                                          // transition, hideStrategy, disableDisposal, chunk
 ```
 
 `Frame`: `navigate(component | component[], keepOldControl = false)`, `navigateLazy(caller, options?, keepOldControl?)`,
@@ -247,6 +247,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX127` | thrown | a lazy route or `Lazy` loaded a module with no `default` export (or another non-component object; null/text/arrays/promises are placed as before); router: `cause` of `MJX304` + error route; `Lazy`: load failure. Fix: `export default`, or `() => import('./X').then(m => m.X)` |
 | `MJX128` | dev warning | a class component hides a `ComponentBase` member: override without `super` (`build`, `dispose`, `style` …), an instance field over a method/accessor, or a replaced `controls`/`attr`/`class`/`bindings`/`motif`/`element`/`parent`; once per class, behavior unchanged |
 | `MJX129` | reported | an `onfulfilled`/`onrejected` callback given to `using` threw or returned a rejected promise; original error in `cause` |
+| `MJX130` | reported | a child sliced by `x-chunk` threw while being built on its turn; the other children of the slice still build; original error in `cause` |
 | `MJX121` | dev warning | compiled code's compiler contract differs from the `@motifx/core` runtime |
 | `MJX122` | reported | a component hook, `ref` callback or `x:` lifecycle listener threw (`The component onBuilt hook threw.`) |
 | `MJX123` | reported | an event handler or application event listener threw (`The 'click' event handler threw.`) |
@@ -302,14 +303,14 @@ as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method
 `return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`
 (ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors `MJX006`
 (unsupported directive), `MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
-`MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal),
+`MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal, or an `x-chunk` without a number),
 `MJX013` (namespaced tag name such as `<svg:rect>`, or a spread child `{...items}`; a lowercase non-HTML
 name such as `<card>` is no error, it resolves to the identifier in scope and a missing one fails at runtime
 with `ReferenceError`); `MJX014` (`motif-lint` cannot read the tsconfig).
 
 ## JSX-only props
 
-`key`, `ref` / `x-ref`, `x-html`, `x-wait`, `x-display`, `x-style`, `initializeComponent` (plain and component tags),
+`key`, `ref` / `x-ref`, `x-html`, `x-wait`, `x-display`, `x-chunk`, `x-style`, `initializeComponent` (plain and component tags),
 `transition`, `childs`, `on<event>[:modifier]` (one modifier per attribute), `on:name` / `on-name` / `on_name`
 (handler passed as is to `motif.on(name, fn)`), `on<lifecycle>` / `x-<lifecycle>` / `x:<lifecycle>`
 (`onMounted`, `onActivated`, `onDeactivated`… included; several spellings on one tag all run in source order), `options={{ hideStrategy, disableDisposal }}`,

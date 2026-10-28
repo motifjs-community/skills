@@ -133,6 +133,11 @@ const state = reactive({ todos: [{ id: 1, title: 'Buy milk', done: false }] });
 - The render function must return a component (instance, class or factory); anything else throws
   `MJX201` (reported through the list effect as `MJX208`) and that update places no rows at all. To
   skip items, filter first (`.filter(...).map(...)`) instead of returning `null`.
+- **Thousands of rows in one update block the page while they build.** Put `x-chunk={200}` on the
+  element that holds the rows: the first 200 build at once, the rest are created 200 per frame, in
+  order, each with the index it has when its turn comes; an item removed before its turn never gets a
+  row. The DOM still ends up holding every row — when it should not, use `Virtualization`
+  (`references/virtualization.md`).
 
 ## `switch`-like rendering
 
