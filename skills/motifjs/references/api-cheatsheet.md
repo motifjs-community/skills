@@ -247,7 +247,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX127` | thrown | a lazy route or `Lazy` loaded a module with no `default` export (or another non-component object; null/text/arrays/promises are placed as before); router: `cause` of `MJX304` + error route; `Lazy`: load failure. Fix: `export default`, or `() => import('./X').then(m => m.X)` |
 | `MJX128` | dev warning | a class component hides a `ComponentBase` member: override without `super` (`build`, `dispose`, `style` …), an instance field over a method/accessor, or a replaced `controls`/`attr`/`class`/`bindings`/`motif`/`element`/`parent`; once per class, behavior unchanged |
 | `MJX129` | reported | an `onfulfilled`/`onrejected` callback given to `using` threw or returned a rejected promise; original error in `cause` |
-| `MJX130` | reported | a child sliced by `x-chunk` threw while being built on its turn; the other children of the slice still build; original error in `cause` |
+| `MJX130` | reported | a child sliced by `x-chunk` threw while being built on its turn; the other children of the slice still build; a `.map` row that threw keeps its trace and is created again on the list's next update; original error in `cause` |
 | `MJX121` | dev warning | compiled code's compiler contract differs from the `@motifx/core` runtime |
 | `MJX122` | reported | a component hook, `ref` callback or `x:` lifecycle listener threw (`The component onBuilt hook threw.`) |
 | `MJX123` | reported | an event handler or application event listener threw (`The 'click' event handler threw.`) |

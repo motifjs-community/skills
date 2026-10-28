@@ -293,6 +293,8 @@ not have.
 
 On every directive but `x-chunk` (`x-wait`/`x-display` included) a variable or member holding a function is called as the
 getter, with `this` for a method: `x-display={isAuthor}`, `x-wait={this.isLoading}`, `x-text={this.label}`.
+`x-chunk` (and `options: { chunk }`) calls such a function once, when the component is set up, and uses the value it returns;
+later changes are not tracked.
 
 ## The bindings API (`this.bindings` / `sender.bindings`)
 
