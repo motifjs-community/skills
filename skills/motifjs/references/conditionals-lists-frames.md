@@ -133,11 +133,16 @@ const state = reactive({ todos: [{ id: 1, title: 'Buy milk', done: false }] });
 - The render function must return a component (instance, class or factory); anything else throws
   `MJX201` (reported through the list effect as `MJX208`) and that update places no rows at all. To
   skip items, filter first (`.filter(...).map(...)`) instead of returning `null`.
-- **Thousands of rows in one update block the page while they build.** Put `x-chunk={200}` on the
-  element that holds the rows: the first 200 build at once, the rest are created 200 per frame, in
-  order, each with the index it has when its turn comes; an item removed before its turn never gets a
-  row. The DOM still ends up holding every row — when it should not, use `Virtualization`
-  (`references/virtualization.md`).
+- **Thousands of rows in one update block the page while they build.** Put `x-chunk` on the
+  element that holds the rows: the first 100 build at once, the rest are created in order over the
+  next frames, each with the index it has when its turn comes; an item removed before its turn never
+  gets a row. Each frame builds as many as keep the frame (building plus the browser's layout) near
+  50 ms. `x-chunk={50}` builds exactly 50 at once and at least 50 per frame. Rows are created lazily
+  only for a bare `{items.map(...)}`; inside a getter `{() => items.map(...)}` every row component
+  is created up front and only their builds are sliced. The browser relays out the whole container
+  every frame, a table most of all, so past roughly 10–30 thousand table rows (a few tens of thousands
+  of plain rows) frames grow long. The DOM still ends up holding every row — when it should not, use
+  `Virtualization` (`references/virtualization.md`).
 
 ## `switch`-like rendering
 

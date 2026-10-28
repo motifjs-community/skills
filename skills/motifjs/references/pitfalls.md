@@ -181,9 +181,10 @@
   `clear`, `register`, `setDisposable`, `stopAnimations` and `options` live on `this.motif`, so a
   subclass may use those names for its own members.
 - **A page that puts thousands of children into one element in a single update freezes until all of
-  them are built.** Write `x-chunk={200}` on that element: the first 200 build at once and the rest
-  200 per frame, `.map` rows created only on their turn; `Virtualization` keeps only the visible rows
-  in the DOM. Nothing changes for elements without the directive.
+  them are built.** Write `x-chunk` on that element: the first 100 build at once and the rest over
+  the next frames, each frame sized to stay near 50 ms, `.map` rows created only on their turn;
+  `Virtualization` keeps only the visible rows in the DOM and is the tool past a few tens of thousands
+  of rows. Nothing changes for elements without the directive.
 - **Reach for `x-wait`/`x-display` before `{cond && <X/>}`.** The directive keeps the instance and
   swaps a `<!--h-->` placeholder, and when the condition starts hidden the element is never built at
   all (subtree included; `view()` and the build hooks wait, while a class still runs its constructor and

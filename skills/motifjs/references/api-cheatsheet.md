@@ -303,7 +303,7 @@ as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method
 `return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`
 (ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors `MJX006`
 (unsupported directive), `MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
-`MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal, or an `x-chunk` without a number),
+`MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal, or an `x-chunk` value that cannot be a number),
 `MJX013` (namespaced tag name such as `<svg:rect>`, or a spread child `{...items}`; a lowercase non-HTML
 name such as `<card>` is no error, it resolves to the identifier in scope and a missing one fails at runtime
 with `ReferenceError`); `MJX014` (`motif-lint` cannot read the tsconfig).
