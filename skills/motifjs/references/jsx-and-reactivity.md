@@ -36,6 +36,9 @@ runs 50 times in one flush (it writes what it reads, e.g. `state.n++`) is skippe
 and raises the `MJX203` dev warning; wrap the write in `untracked(...)`. An effect that tracks more than 1000
 dependencies in one run raises `MJX209` once (owner named when devtools are on): it is scanning a reactive list;
 look items up by key or read the list with `untracked(...)`; `useReactiveMonitor({ dependencies })` sets the limit.
+Independent of size, `MJX210` fires once per list when two or more instances of one component (or eight owner-less
+effects) scan the same reactive list with `find`/`findIndex`/`findLast`/`findLastIndex`/`some`/`every`, wherever the
+list came from (props, another module, a service); `useReactiveMonitor({ scans: false })` switches it off.
 
 Module-level stores are idiomatic:
 
@@ -373,8 +376,10 @@ subscriptions, 1.2 s to set up, 1 s for a single `push`. The scan itself is chea
 `includes`/`indexOf` read no item field and are not affected; "scanning the whole list" (`filter(...).length`) makes it worse.
 
 How it shows: the compiler warns `MJX004` on `find`/`findIndex`/`some`/`every` with an `x.field === value` predicate inside
-a reactive getter; at run time an effect that tracks more than 1000 dependencies in one run warns `MJX209`, naming the owner
-component and binding when devtools are on; the DevTools inspector lists the dependency count of each effect.
+a reactive getter; at run time `MJX210` fires as soon as two instances of one component scan the same reactive list with a
+lookup method, whatever the list's size and wherever it came from (props, another module, a service); an effect that tracks
+more than 1000 dependencies in one run warns `MJX209`, naming the owner component and binding when devtools are on; the
+DevTools inspector lists the dependency count of each effect.
 
 Avoid it, in this order:
 

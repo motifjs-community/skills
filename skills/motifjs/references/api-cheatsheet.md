@@ -31,7 +31,7 @@ app.on(event, handler) → unsubscribe fn; app.off(event, handler); app.fire(eve
 app.onRouterChanged((e: RouterNavigatedEventArgs) => …) → unsubscribe fn   // { uri, params, meta, route, ok, initial, redirectedFrom?, direction, state }; every navigation incl. initial + 404
 app.onLifecycle(({ state, visible, online }) => …) → unsubscribe fn   // state: 'visible'|'hidden'|'frozen'|'resumed'|'restored'|'online'|'offline'; listeners installed lazily, removed by app.dispose(); never tied to a component, also not through this.context: call the unsubscribe yourself
 app.isVisible; app.isOnline
-app.useDevelopment(bool = true); app.useLogging(bool = true); app.useReactiveMonitor({ enabled, threshold, name, dependencies })
+app.useDevelopment(bool = true); app.useLogging(bool = true); app.useReactiveMonitor({ enabled, threshold, name, dependencies, scans })
 app.isDevelopmentModeEnabled; app.restartRouter(uri?): Promise<result> (builds a fresh router from the latest useRouter config and starts it at '/' or at uri, replacing the history entry: routes, keepAlive cache and stack reset, scroll memory kept; the shown page leaves like a leaving page, a given/singleton layout at the same place stays; guards run, a cancel leaves the screen empty; onRouterChanged fires with initial: true; resolves to the startup navigation's result, undefined before run)
 app.connectDocument(doc: Document): () => void   // same-origin popup/iframe document: router links and stack swipes listen there too; counted, released by the returned fn or the window's pagehide; the page's own document is a no-op; MJX417 for a value that is not a usable document
 app.windows: WindowManager   // open(component, options?): Promise<AppWindow> (= create + add; call inside a user gesture) · create(options?) · attach(window, options?) · of(component): AppWindow | null · supports('popup' | 'pip') · closeAll() · list (reactive) · events 'window-opened' / 'window-closed' { window }
@@ -115,7 +115,7 @@ untracked(fn): T; deepClone(v); clearModel(m)
 Signal: value, peek(), update(fn), mutate(fn), notify(), asReadonly(): ReadonlySignal<T>, dispose()
 Computed: value, peek(), dispose(); LazyComputed: value, peek(), isDirty, dispose()
 type Bind<T> = T | (() => T); toGetter(v: Bind<T>): () => T; read(v: Bind<T>): T
-configureReactivityLeakMonitor({ enabled?, threshold?, name?, dependencies? })   // same switch as app.useReactiveMonitor; dependencies = per-run dependency limit of one effect (1000, MJX209; 0 off)
+configureReactivityLeakMonitor({ enabled?, threshold?, name?, dependencies? })   // same switch as app.useReactiveMonitor; dependencies = per-run dependency limit of one effect (1000, MJX209; 0 off); scans = runtime list-scan warning MJX210 (default on, false off)
 asyncTracking                                                    // emitted around the awaits of an async function written inline on <Virtualization dataRequest>; not for app code
 ```
 
@@ -256,6 +256,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX202` | dev warning | duplicate list `key` (rendering unaffected) |
 | `MJX203` | dev warning | an effect ran 50 times in one flush; skipped for the rest of that flush |
 | `MJX209` | dev warning | an effect tracked more than `dependencies` (1000) values in one run, once per effect, at most ten times; names the owner component and binding when devtools are on; look items up by key or read the list with `untracked` |
+| `MJX210` | dev warning | two or more instances of one component (eight owner-less effects) scan the same reactive list with `find`/`findIndex`/`findLast`/`findLastIndex`/`some`/`every`, whatever its size and wherever it came from (props, another module, a service); once per list, at most ten times; keep a keyed `Map` or a computed index, or read the list with `untracked`; `useReactiveMonitor({ scans: false })` switches it off |
 | `MJX204` | dev warning | a component reached a text binding (template prop assigned after setup; write `{() => props.tpl}`) |
 | `MJX205` | reported | `Virtualization` `watch` callback threw |
 | `MJX206` | dev warning | `Virtualization` `autoRefresh` stopped (`dataRequest` keeps changing the data it reads) |
