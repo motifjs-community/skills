@@ -290,8 +290,12 @@ branches cannot see), `MJX002` (camelCase DOM event name on a component tag), `M
 `key`), `MJX004` (a reactive getter scans a reactive list by key: `find`/`findIndex`/`some`/`every` with an `x.field === value`
 predicate; n components doing this cost n² reads per change, keep a keyed map or read with `untracked`), `MJX017` (a reactive
 getter writes a reactive value it also reads: `++`, `+=` or an assignment to a field read elsewhere in the getter; it retriggers
-itself; plain class fields and fields the getter never reads are fine), `MJX018` (`sort`/`reverse` on a reactive list inside a
-reactive getter, or `push`/`pop`/`shift`/`unshift`/`splice` when the getter also reads that list; work on a copy), `MJX007` (unknown `x-*` directive, passed on
+itself; plain class fields and fields the getter never reads are fine; to keep a latch, read the flag inside `untracked`, wrapping
+the write alone does not help), `MJX018` (`sort`/`reverse` on a reactive list inside a
+reactive getter, or `push`/`pop`/`shift`/`unshift`/`splice` when the getter also reads that list; work on a copy; these three
+checks recognise `this.state`, `this.props`, class fields built with a core store factory in an initializer or the constructor,
+same-file module stores and aliases of those inside the getter, and count callbacks of synchronous array methods as part of
+the getter; imported stores, injected services and a function component's `props` are not recognised), `MJX007` (unknown `x-*` directive, passed on
 as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method/accessor that does not reach
 `super` on every path; also checked in `.ts`/`.js` files, base followed across files), `MJX016` (a `switch` or
 `return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`
