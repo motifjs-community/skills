@@ -339,6 +339,61 @@ A `Binding` (returned by `add`/`model`) has `converter` (applied to the value re
 (the write function of the getter/setter form) and `formatInfo`; set them on the returned binding before
 the component is built. `updateMode` is not read by any binding.
 
+Registered bindings start with the component: `add` (and the other registering calls) activates the binding at
+once only when the component is already built; otherwise `build()` activates it. A value needed before the build
+is read once by hand.
+
+Where `add(prop, source)` writes the value, in this order: `'wait'` / `'display'` → `isWait`; `'text'` /
+`'textContent'` → `setText()` (replaces the element's whole `textContent`); `'html'` / `'innerHTML'` →
+`innerHTML`; `'visible'` / `'visibility'` → `motif.show()` / `motif.hide()`; `'style'` → `style()` (object values
+only); `'model'` → the input's `value` or `checked`. Any other name: `'value'` goes to `component.value` when the
+component has one; else a name the element has (`tabIndex`, `title`, `hidden`, `disabled`, `placeholder`…) is
+set on the element directly; else a name the component has is assigned to it (`component[name] = value`, its
+setter or field). A name found nowhere writes nothing. A dotted name is a path on the component and starts
+there, skipping the special names and the element: `add('options.locked', fn)` writes
+`component.options.locked`, calling a setter on the way; nothing is written when a step is missing or is not an
+object. Before writing, a value that is a function is called with
+no arguments, again while the result is still a function, so a function held in the source (a formatter, a
+check) is never written as it is.
+
+So a component can bind its own property, and that is how a component follows a prop given as a function: it
+binds the prop to its own setter. Reactive data re-runs the binding by itself; with plain data the owner calls
+`setState()` / `reState()` and the binding reads the prop again. A plain value prop is written once.
+
+```tsx
+class NoteBody extends Component<HTMLDivElement, { note: Note; locked: Bind<boolean> }> {
+  get locked() { return this.class.has('locked'); }
+  set locked(value: boolean) { if (value) this.class.add('locked'); else this.class.remove('locked'); }
+  onConfigured() { this.bindings.add('locked', this.props.locked); }   // value or getter
+  view() { return <p>{this.props.note.body}</p>; }
+}
+// <NoteBody note={note} locked={() => note.archived} />; plain note: change it, then page.reState()
+```
+
+An Options object can declare the same `get`/`set` pair (it is copied onto the component) and call
+`this.bindings.add('locked', props.locked)` in `onConfigured`. A function component has no property of its
+own: it follows the prop with `bindings.watch` on its root
+(`onBuilt={(c) => c.bindings.watch(() => …read(props.locked)…)}`), which `setState()` / `reState()` re-run too.
+Limits of a property binding:
+
+- A name the element also has (`title`, `hidden`, `disabled`, `tabIndex`…) is written to the element, never to
+  the component.
+- A method name is overwritten by the value, not called; call the method from `bindings.watch` or make the
+  property a setter.
+- A function value is called before writing, so a function-valued property (a formatter, a comparer) is assigned
+  directly, not bound.
+- A value written from code is replaced on the binding's next run (a reactive change, `setState()`, `reState()`);
+  `bindings.remove(binding)` (the binding `add` returned) hands the property to code.
+
+`add(binding)` registers your own binding object: anything with `propertyName`, `dataSource`, `activate()`,
+`deactivate()` and `reActivate()` (the `IBaseBinding` shape; the type is not exported and the object is matched
+by shape). It joins the same registry, so `setState()` / `reState()` call its `reActivate()`, `remove(binding)`
+and `clear()` call its `deactivate()`, and so does disposing the component. Without an optional `pause()`
+method, the pause before a dispose calls `deactivate()` too, so it can run twice and must be safe to repeat.
+`reActivate()` re-reads and writes again without tearing anything down. The object decides where the value
+goes, so it can follow a getter in an effect and write the result to a component's own field instead of a public
+setter; nothing calls the value for it.
+
 `formatString` codes: on numbers `C` → currency, `P` → percent (the value is multiplied by 100: `0.25` →
 `25%`), `N`/`N2` → fixed decimals (default 2), the number codes also in lower case;
 on `Date` values `d` → `toLocaleDateString`, `t` → `toLocaleTimeString`; any other value is written
@@ -371,6 +426,11 @@ first, then its children. A path written directly (`{i18n.dict.title}`, `binding
 'title')`) keeps the object it read at build time, so replacing that object leaves the text on the old one;
 a getter slot (`{() => i18n.dict.title}`) reads the new one. A binding that throws while refreshing is
 reported as `MJX208` and the remaining ones still run.
+
+Only what is in the component's binding registry is refreshed. A free `effect()` created in a component is not
+in it: `setState()` / `reState()` never re-run it, even when its stop function is registered with
+`motif.setDisposable` (that only stops it on dispose). Work that must follow plain data after a refresh is
+written as a binding or with `bindings.watch`, not as a free effect.
 
 ## The list-scan trap (n² dependencies)
 
