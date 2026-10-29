@@ -363,7 +363,8 @@ data.message = 'World'; // textContent updates after a microtask
 Prefer reactive data (`reactive(obj)`). For plain objects mutated in place, `this.setState()` refreshes
 the subtree: it calls `setState()` on each child, then `bindings.reActivateAll()`, which re-runs every
 registered binding of the component (text and attribute paths, class and style getters, `x-text`, `x-html`,
-`value`/`checked`/`x-model`, `wait`/`display`; each list disposes and rebuilds all its rows) and restarts
+`value`/`checked`/`x-model`, `wait`/`display`; each list matches its rows to the items again like a
+reactive update: a kept item keeps its row, a new item gets one row, a removed item's row is disposed) and restarts
 `when`, `ternary`, `switchCase`, `method` (`{() => …}`, template literals, member calls) and `watch`. A
 branch is rebuilt only when its condition value changed. `reState()` does the same with this component
 first, then its children. A path written directly (`{i18n.dict.title}`, `bindings.add('textContent', dict,
