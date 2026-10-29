@@ -105,8 +105,9 @@
 - A hidden or waiting component (list rows included) is replaced by a `<!--h-->` trace, so
   `element.parentNode` is `null` while hidden; with `hideStrategy: 'detach'` no trace is left either. `hideStrategy` is set through the `options` prop (`options={{ hideStrategy }}`) or `motif.options.hideStrategy` in code.
 - `Virtualization` rows that scroll out of view are detached (not disposed) and kept in an LRU
-  cache (`cacheSize`); `refresh()`, `setData()` and an `autoRefresh` reload dispose them all. Do not
-  hold external references to row components across a reload. In jsdom, fake `clientHeight`/`scrollTop` or nothing renders.
+  cache (`cacheSize`); `refresh()` disposes them all, while `setData()` and an `autoRefresh` reload
+  dispose only the rows of items that are no longer in the data. Do not hold external references to
+  row components across a `refresh()`. In jsdom, fake `clientHeight`/`scrollTop` or nothing renders.
 - On a **plain DOM tag** any `on*` prop that is not a lifecycle name (`<div {...props}/>` with `onClick`,
   `new Component('div', { onclick })`) is registered as a DOM listener for the suffix event. On a
   component tag non-lifecycle `on*` props stay in `this.props` (the compiler wires known DOM event
