@@ -155,24 +155,50 @@ getStores()                           // stores still in use: { id, name, file?,
                                       // early stores kept in a component or service field are found by the scan; stores kept only in a closure are not
                                       // holders: components/services keeping it in a field, e.g. { kind: 'component', path, type, field }
 getExtensions() / readExtension(name)
+readExtensionPanels(name)             // { panels, sources: { [name]: { key?, events?, max? } }, commands: string[] }; a panel's shape beyond id and capabilities is the devtools panel's own schema
+readExtensionSource(name, panel, source, params)   // awaits the source's read(params); needs read on that panel → { ok: true, value } | { ok: false, error }
+callExtension(name, panel, command, args)          // runs a package command; needs write on that panel; the awaited return value is value
 setClass(path, name, on) / setAttribute(path, name, value | null) / setVisible(path, visible)   // setVisible on a root → { ok: false }
 writeModel(path, value) / setProp(path, keys, value) / navigate(uri) / setStoreValue(id, keys, value)
                                       // writes go through public APIs; result { ok, value? } | { ok: false, error }
 ```
 
 Events: `tree:changed` (`parents`; `[]` when the root list changed), `documents:changed` (reread `getDocuments()`), `component:built`, `component:visibility`, `component:wait`, `component:disposing`,
-`component:disposed` (payloads carry `{ path, type, tag }`; `path` is `null` under no root), `reactivity:flush` (once per reactivity turn; a trigger names its store as `store: { id, path }`), `stores:changed` (new stores recorded, once per turn), `scopes:changed` (a DI scope opened, committed or disposed, once per turn),
+`component:disposed` (payloads carry `{ path, type, tag }`; `path` is `null` under no root), `reactivity:flush` (once per reactivity turn: `{ id, duration, runs, triggers, effects, operations }`; a trigger names its store as `store: { id, path }` and the operation it ran in as `operationId`), `stores:changed` (new stores recorded, once per turn), `scopes:changed` (a DI scope opened, committed or disposed, once per turn),
 `service:created` (`{ scope, token, lifetime, source: 'class' | 'factory' | 'value', instance }`; transients on every resolution), `service:disposed` (`{ scope, token, lifetime, instance }`),
 `route:navigation-start`, `route:navigation-end` (`outcome`: `done`, `skipped`, `cancelled`, `notFound`, `error`),
+`operation:started` (`{ id, kind, name?, data?, parent? }`), `operation:finished` (`{ id, duration, error? }`),
+`extension:registered` / `extension:disposed` (`{ name }`), `extension:changed` (`{ name, source? }`), `extension:reveal` (`{ name, target }`),
 `warning`, `error:caught`, `ext:<name>:<type>`. There is no mounted event; read `connected` from the tree.
 
 `notInTree` counts living components that are not in the tree; when it does not drop after leaving a page, those
 components are still held somewhere.
 
 A package exposes its own state with
-`registerDevtools(name, { describe?, inspect?(component) })` from `@motifx/core/devtools`; it returns
-`{ emit(type, payload), pathOf(component), dispose() }`. Registration is free while devtools are off; `describe` and
-`inspect` run only when the panel asks.
+`registerDevtools(name, { describe?, inspect?(component), sources?, commands?, panels? })` from `@motifx/core/devtools`;
+it returns `{ emit(type, payload), pathOf(component), changed(source?), reveal(target), dispose() }`. Registration is
+free while devtools are off; `describe`, `inspect`, `sources`, `commands` and a `panels` function run only when the
+panel asks. `panels` are `{ id, title, icon?, order?, capabilities?: { read?, subscribe?, write? }, … }`: the core
+reads only `id` and `capabilities` (checked per panel on every `readExtensionSource` / `callExtension`; `emit` is
+silent while a registration with panels has none subscribing), the rest is the devtools panel's own schema. `sources`
+are `{ read(params), key?, events?, max? }`, `commands` plain functions, both looked up by own key only; a throw
+answers `{ ok: false, error }`. `changed(source?)` and `reveal({ panel, route?, params?, state? })` publish
+`extension:changed` / `extension:reveal` while the registration is the current one under its name.
+
+Operations and write records, for packages that keep a history or draw a timeline (not for app code):
+`runOperation(info, fn)`, `startOperation(info) => { id, kind, name?, data?, parent? }`,
+`resumeOperation(operation | null, fn)`, `endOperation(operation, error?)`, `currentOperation()`. An operation is
+"the work running now", one value like the running effect — not a context, nothing is passed down; `parent` is the
+operation running when this one started. `runOperation` with a promise-returning `fn` ends when it settles and
+returns a promise that follows it (same value, same rejection); with devtools off it returns `fn`'s result as it is.
+Nothing survives an `await`: resume by hand, never rely on `currentOperation()` after `await`. Writes, flush triggers
+(`operationId`) and `operation:started` / `operation:finished` carry the id; resuming an ended operation warns once
+(`MJX211`). `onWrite(fn) => off` reports every reactive write while devtools are on:
+`{ target, operationId?, kind: 'add' | 'update' | 'delete' | 'clear' | 'splice' | 'mutate', … }` with `key` /
+`previous` / `value`, `clear.removed`, `splice` as `{ method, index, removed, added }` (one per array method,
+`method: 'length'` for a shortened length), `mutate` for `signal.mutate`. Values are references; no-op writes and a
+listener's own writes are not reported; every report is `@DEV-ONLY`, dropped from production builds — a tool for
+package authors, not an undo primitive.
 
 ## DI
 
@@ -258,6 +284,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX203` | dev warning | an effect ran 50 times in one flush; skipped for the rest of that flush |
 | `MJX209` | dev warning | an effect tracked more than `dependencies` (1000) values in one run, once per effect, at most ten times; names the owner component and binding when devtools are on; look items up by key or read the list with `untracked` |
 | `MJX210` | dev warning | two or more instances of one component (eight owner-less effects) scan the same reactive list with `find`/`findIndex`/`findLast`/`findLastIndex`/`some`/`every` and the list has at least as many items as there are scanners, wherever it came from (props, another module, a service); instances are component objects, a three-item settings list read by a hundred rows stays quiet; once per list, at most ten times, needs devtools on; keep a keyed `Map` or a computed index, or read the list with `untracked`; `useReactiveMonitor({ scans: false })` switches it off |
+| `MJX211` | dev warning | `resumeOperation` on an operation that already ended; its writes are still recorded under it. End after the last write, or use `startOperation` / `endOperation` for work that spans callbacks |
 | `MJX204` | dev warning | a component reached a text binding (template prop assigned after setup; write `{() => props.tpl}`) |
 | `MJX205` | reported | `Virtualization` `watch` callback threw |
 | `MJX206` | dev warning | `Virtualization` `autoRefresh` stopped (`dataRequest` keeps changing the data it reads) |
