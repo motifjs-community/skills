@@ -9,6 +9,7 @@ Each skill follows the open [Agent Skills](https://agentskills.io) format: a `SK
 | Skill | What it covers |
 |---|---|
 | [`motifjs`](skills/motifjs/SKILL.md) | Components, reactivity, JSX bindings, views without JSX (`motifComponent`), conditionals and lists, events and forms, lifecycle and disposal, router, dependency injection, styling and transitions, virtualization, testing, mobile and Electron, error codes. |
+| [`motifjs-devtools`](skills/motifjs-devtools/SKILL.md) | For package authors: giving a MotifJS package its own section in the devtools panel with `registerDevtools` (sources, commands, events, JSON panel widgets, routes, Performance lanes, reveal, limits). |
 
 ## Install
 
@@ -21,7 +22,7 @@ Inside a session:
 /plugin install motifjs@motifjs-community
 ```
 
-The second command opens the plugin details, where you choose whether it is installed for you, for the project or for this machine only. From a shell, `claude plugin marketplace add motifjs-community/skills` and `claude plugin install motifjs@motifjs-community` install it directly. In VS Code, type `/plugins`, add `motifjs-community/skills` on the Marketplaces tab and install `motifjs` on the Plugins tab. In the desktop app, use `+` → Plugins → Add plugin.
+The second command opens the plugin details, where you choose whether it is installed for you, for the project or for this machine only. From a shell, `claude plugin marketplace add motifjs-community/skills` and `claude plugin install motifjs@motifjs-community` install it directly. In VS Code, type `/plugins`, add `motifjs-community/skills` on the Marketplaces tab and install `motifjs` on the Plugins tab. In the desktop app, use `+` → Plugins → Add plugin. `motifjs-devtools@motifjs-community` installs the same way.
 
 **For everyone working on a repository**, commit this to the repository's `.claude/settings.json`; the skill then loads for each person who trusts the folder:
 
