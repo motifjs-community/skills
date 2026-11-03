@@ -158,6 +158,7 @@ If a minimal reproduction shows that MotifJS, not the app, behaves against this 
 | Phone-style page stack, swipe back, app lifecycle, Electron and `file://` apps | `references/mobile-and-electron.md` |
 | Opening a component in another window or Picture-in-Picture: `app.windows`, options, origin and return, styles, Electron | `references/windows.md` |
 | Writing Jest/jsdom tests for MotifJS components | `references/testing.md` |
+| Building a component library: props followed by one binding, data as given, nothing followed inside, hand-drawn parts, change-checked writes, lifetime traps, measuring | `references/component-libraries.md` |
 | Compact export list with signatures (incl. `Query`, error handling, `@motifx/core/devtools`) | `references/api-cheatsheet.md` |
 | React-habit mistakes and known compiler/runtime quirks | `references/pitfalls.md` |
 | Telling a MotifJS bug from app code, the issue template, filing or handing it over | `references/reporting-bugs.md` |
