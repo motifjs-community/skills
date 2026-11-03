@@ -110,6 +110,8 @@ With `index` the child is placed at that position in the new parent's element; `
 ```ts
 reactive<T>(m: T): T; useModel<T>(m: T): T   // a number, string or boolean is boxed: reactive('') is { value: '' }
 createSignal<T>(v): Signal<T>; new Signal(v, equals?); Signal.create(v, equals?); createComputed<T>(fn): Computed<T>; createLazyComputed<T>(fn): LazyComputed<T>
+createSelection<T>(fn): KeySelection<T>   // isSelected(key) subscribes to that key only; a source change wakes only the previous and the new key; .dispose()
+asReadonly<T>(o): DeepReadonly<T>; isReadonly(v): boolean   // live read-only view (no copy); writes, deletes, mutating array methods and Map/Set changes throw MJX212
 effect(fn, onValueChanged?): () => void   // onValueChanged(value) runs after every run of fn (the first included) with fn's return value, untracked; a run in which fn throws has no value: onValueChanged is not called, MJX208 is reported, tracking continues
 untracked(fn): T; deepClone(v); clearModel(m)
 Signal: value, peek(), update(fn), mutate(fn), notify(), asReadonly(): ReadonlySignal<T>, dispose()
@@ -285,6 +287,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX209` | dev warning | an effect tracked more than `dependencies` (1000) values in one run, once per effect, at most ten times; names the owner component and binding when devtools are on; look items up by key or read the list with `untracked` |
 | `MJX210` | dev warning | two or more instances of one component (eight owner-less effects) scan the same reactive list with `find`/`findIndex`/`findLast`/`findLastIndex`/`some`/`every` and the list has at least as many items as there are scanners, wherever it came from (props, another module, a service); instances are component objects, a three-item settings list read by a hundred rows stays quiet; once per list, at most ten times, needs devtools on; keep a keyed `Map` or a computed index, or read the list with `untracked`; `useReactiveMonitor({ scans: false })` switches it off |
 | `MJX211` | dev warning | `resumeOperation` on an operation that already ended; its writes are still recorded under it. End after the last write, or use `startOperation` / `endOperation` for work that spans callbacks |
+| `MJX212` | thrown | a write, delete, mutating array method or `Map`/`Set` change through an `asReadonly` view; nothing changes. Change the data through the reactive object the view was made from |
 | `MJX204` | dev warning | a component reached a text binding (template prop assigned after setup; write `{() => props.tpl}`) |
 | `MJX205` | reported | `Virtualization` `watch` callback threw |
 | `MJX206` | dev warning | `Virtualization` `autoRefresh` stopped (`dataRequest` keeps changing the data it reads) |
