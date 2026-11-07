@@ -120,8 +120,7 @@
   `MJX202` duplicate check), `MJX004` (a reactive getter looks an item up by scanning a reactive list with
   `find`/`findIndex`/`some`/`every` and an `x.field === value` predicate: n components → n² reads per change; use a keyed
   map or `untracked`), `MJX017` (a reactive getter writes a reactive value it also reads; it retriggers itself), `MJX018`
-  (`sort`/`reverse` on a reactive list inside a getter, or `push`/… when the getter also reads the list; sort a copy), `MJX007` (unknown `x-*` name; it is passed on
-  as an `on<name>` prop), `MJX015` (a class component override of `build`/`dispose`/`style`/… that
+  (`sort`/`reverse` on a reactive list inside a getter, or `push`/… when the getter also reads the list; sort a copy), `MJX015` (a class component override of `build`/`dispose`/`style`/… that
   can finish without reaching `super`; checked in `.ts`/`.js` files too), `MJX016` (a `switch` or
   `return a ? b : c` getter the compiler cannot lower — non-literal `case` label, `return` or JSX before the
   `switch`, `break` leaving it — runs as `bindings.method`: no branch is kept). Disable with
@@ -129,9 +128,9 @@
   reports `MJX005`: a ternary on a component prop whose declared type is not `Bind<T>` (the compiler
   cannot see prop types; TypeScript does not see the getter wrapping). A hit is a real contract
   violation.
-- **Some JSX fails the build.** `x-reload`, `x-bind`, `x-effect`, `x-focus`, `x-interrupt`, `x-to`,
-  `x-list`, `x-loop` are not directives (`MJX006`); use `x-wait`/`x-display`, `{items.map(i => <X key={i.id}/>)}`,
-  `effect(...)` or `ref` + `focus()` instead. A `function () {}` child is `MJX008` (write `{() => …}`).
+- **Some JSX fails the build.** A `function () {}` child is `MJX008` (write `{() => …}`).
+- **An `x` name outside the core's directives does nothing by itself.** `x-focus`, `x-list` or a misspelled `x-wiat` is a plain
+  prop or attribute, with no warning; use `x-wait`/`x-display`, `{items.map(i => <X key={i.id}/>)}`, `effect(...)` or `ref` + `focus()`.
   A string/boolean event handler (`onclick="go()"`) is `MJX009`; invalid lifecycle/directive values and
   unsupported tag or child forms are `MJX010`–`MJX013`.
   The thrown error carries the code in `error.code`.

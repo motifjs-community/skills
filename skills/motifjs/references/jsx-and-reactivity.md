@@ -282,7 +282,7 @@ not have.
 | `x-html={() => html}` | Reactive `innerHTML` (unsafe with untrusted input). |
 | `x-text`, `x-value`, `x-watch`, `x-model` | Compile to `sender.bindings.text(…)` / `.value(…)` / `.watch(…)` / `.model(…)`. `x-text` sets the element's whole `textContent`: on its first change it removes the element's other children, so write `{() => text}` as a child for live text next to siblings. `x-model={() => s.q}` (or `x-model={s.q}`) becomes `bindings.model(() => s.q, v => { s.q = v })`: two-way, and the owner object is read again on every write. A value that is not a member access binds one-way (events-and-forms.md). |
 | `x-inject={v}` | Passed as the prop `inject` (no attribute on a plain DOM tag). |
-| `x-foo` (unknown) | Passed as the prop `onfoo`; compiler warning `MJX007`. `x-bind`, `x-focus`, `x-list`, `x-loop`, `x-effect`, `x-reload`, `x-interrupt`, `x-to` are compile errors (`MJX006`). |
+| `xFoo`, `x-foo`, `x:foo` (not a core name) | Passed on exactly as written: a prop on a component, an attribute on a plain DOM tag. |
 | `x-wait={() => bool}` | While `true`, the component is held back from the DOM. |
 | `x-display={() => bool}` | Show/hide (uses `hideStrategy`). |
 | `x-chunk` / `x-chunk={50}` | Builds the element's children in slices: the first 100 added together (or exactly n with a number) build at once, the rest leave a `<!--h-->` trace and build in order over the next frames, as many per frame as keep the frame near 50 ms (at least n with a number); `.map` rows under it are created only on their turn, with the index they have then. No value or a number; a string, object or arrow function stops the build with `MJX012`. `options: { chunk: true }` or `options: { chunk: 50 }` in code. |

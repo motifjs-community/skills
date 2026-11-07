@@ -327,12 +327,11 @@ the write alone does not help), `MJX018` (`sort`/`reverse` on a reactive list in
 reactive getter, or `push`/`pop`/`shift`/`unshift`/`splice` when the getter also reads that list; work on a copy; these three
 checks recognise `this.state`, `this.props`, class fields built with a core store factory in an initializer or the constructor,
 same-file module stores and aliases of those inside the getter, and count callbacks of synchronous array methods as part of
-the getter; imported stores, stores created inside a function, injected services and a function component's `props` are not recognised), `MJX007` (unknown `x-*` directive, passed on
-as `on<name>`), `MJX015` (a class component override of a `ComponentBase` method/accessor that does not reach
+the getter; imported stores, stores created inside a function, injected services and a function component's `props` are not recognised), `MJX015` (a class component override of a `ComponentBase` method/accessor that does not reach
 `super` on every path; also checked in `.ts`/`.js` files, base followed across files), `MJX016` (a `switch` or
 `return a ? b : c` getter that cannot be lowered runs as `bindings.method`, no branch is kept); `MJX005` from `motif-lint`
-(ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors `MJX006`
-(unsupported directive), `MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
+(ternary on a prop not typed `Bind<T>`), which also reports `MJX015`; build errors
+`MJX008` (`function () {}` as a JSX child), `MJX009` (string/boolean event handler),
 `MJX010` (invalid lifecycle hook value), `MJX011` / `MJX012` (invalid directive value / object literal, or an `x-chunk` value that cannot be a number),
 `MJX013` (namespaced tag name such as `<svg:rect>`, or a spread child `{...items}`; a lowercase non-HTML
 name such as `<card>` is no error, it resolves to the identifier in scope and a missing one fails at runtime
