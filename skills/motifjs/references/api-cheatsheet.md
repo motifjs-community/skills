@@ -318,8 +318,7 @@ to `errorHandler.addListener` (original error in `cause`); "dev warning" prints 
 | `MJX602`–`MJX605` | thrown | `Resilience`: circuit open / bulkhead queue full / rate limit exceeded / timeout (`TimeoutError`) |
 
 Compiler (`@motifx/compiler`): warnings `MJX001` (block-bodied arrow with parameters in child position declares locals the
-branches cannot see), `MJX002` (camelCase DOM event name on a component tag), `MJX003` (`.map()` item without
-`key`), `MJX004` (a reactive getter scans a reactive list by key: `find`/`findIndex`/`some`/`every` with an `x.field === value`
+branches cannot see), `MJX002` (camelCase DOM event name on a component tag), `MJX004` (a reactive getter scans a reactive list by key: `find`/`findIndex`/`some`/`every` with an `x.field === value`
 predicate; n components doing this cost n² reads per change, keep a keyed map or read with `untracked`), `MJX017` (a reactive
 getter writes a reactive value it also reads: `++`, `+=` or an assignment to a field read elsewhere in the getter; it retriggers
 itself; plain class fields and fields the getter never reads are fine; to keep a latch, read the flag inside `untracked`, wrapping

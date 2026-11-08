@@ -124,9 +124,8 @@ const state = reactive({ todos: [{ id: 1, title: 'Buy milk', done: false }] });
   their row when the same value stays at the same index, or anywhere when the render function takes
   no `index` parameter. An object item's row is reused when it moves, so the `index` a render function
   receives is the position when the row was built; a sort does not update it.
-- **`key`**: still give a stable unique value; it identifies items. It does not take part in matching
-  and does not change DOM reuse; a duplicate key raises the `MJX202` dev warning, and a `.map` without
-  `key` raises the compiler warning `MJX003`.
+- **`key`**: optional; it identifies items. It does not take part in matching and does not change DOM
+  reuse. If you write one, keep it stable and unique: a duplicate key raises the `MJX202` dev warning.
 - Items are reactive: mutating `todo.done` updates only that row.
 - `{state.todos.filter(t => !t.done).map(...)}` is reactive when the filter reads reactive fields.
 - `items.map(function (item) { … }, ctx)`: the second `map` argument is honoured as `this`.
