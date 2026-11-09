@@ -93,6 +93,45 @@ export function onLanguage(component: ComponentBase, draw: () => void) {
   document. A grid that rewrote its per-column sheet on every step of a column resize spent 60–110 ms per step; writing
   the sheet only when its text changed removed the long tasks.
 
+## A temporary attribute on the developer's component
+
+- A library may have to give an attribute for a while to a component the developer wrote and placed inside it:
+  `disabled`, `tabindex`, `aria-*`. `attr.add` does not fit: on the key it writes it removes the developer's binding
+  and cannot give the old value back.
+- `attr.hold` keeps the value over the component's own and returns an `IDisposable`:
+
+```ts
+const held = part.attr.hold({ disabled: true, tabindex: -1, 'aria-disabled': 'true' });
+this.motif.register(held);            // released with this component; or call held.dispose()
+```
+
+- `dispose()` returns each key to the component's own value at that moment. While held, what the component writes
+  to those keys stays aside and does not reach the element: a new value from a live getter, `attr.add`,
+  `attr.remove`, and a `bindings.add` binding that writes the element's property of the same name (`disabled`,
+  `tabIndex`, `ariaLabel`). `reState()`, `setState()` and a transport do not break the hold.
+- What comes back is what the element had when the hold began, also an attribute `attr` never wrote and one that
+  was absent. If the component wrote to the key during the hold, its last write comes back.
+- Holds on one key stack: the element shows the newest; whichever is disposed first, the own value returns when the
+  last one is disposed.
+- It writes by the rule of `attr.add`: the key is written on every element. Giving `disabled` only to elements that
+  have it is the caller's job (`'disabled' in part.element`). A held value is written once; a function is not
+  followed.
+
+## The component an event came from
+
+- `part.motif.isEventFrom(e)` is `true` when the DOM event started on the component's element or inside it. A
+  component without an element answers for its content elements. The answer holds after the event has finished
+  (when `composedPath()` is already empty) and across an open shadow root; a closed shadow root hides its inside
+  from a listener outside it.
+
+```ts
+this.motif.on('click:capture', (_sender, e) => {
+  if (part.motif.isEventFrom(e)) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+});
+```
+
 ## Lifetime
 
 - Disposing a component clears its own fields to `undefined`. Callbacks that come later (timers, promises,

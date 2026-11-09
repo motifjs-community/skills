@@ -198,7 +198,8 @@ On a **plain DOM tag** the spread object is applied as if the attributes were wr
 → attribute. Getters stay live; functions that take parameters (`renderItem: (x) => …`) are skipped.
 Inline attributes are applied after the spread, so `<div {...p} id="fixed"/>` keeps `id="fixed"`, even when
 `p.id` is a getter: the inline write owns the attribute and the getter stops writing it (the spread's other
-getters stay live). The same rule holds for `attr.add`: the last `attr.add` for a key owns that key. It holds for
+getters stay live). The same rule holds for `attr.add`: the last `attr.add` for a key owns that key (to put a value over a key for a
+while and get the own value back, use `attr.hold`, see components.md). It holds for
 `value`/`checked`/`selected` as well (a later `bindings.add('value', …)` replaces the earlier binding; the `x-model`
 binding is not replaced) and per key for `style`: an inline `style={{ color: 'blue' }}` takes only `color` from a spread
 style getter, whose other keys stay live, and an inline style string takes the whole attribute.
@@ -388,7 +389,7 @@ Limits of a property binding:
   `bindings.remove(binding)` (the binding `add` returned) hands the property to code.
 
 `add(binding)` registers your own binding object: anything with `propertyName`, `dataSource`, `activate()`,
-`deactivate()` and `reActivate()` (the `IBaseBinding` shape; the type is not exported and the object is matched
+`deactivate()` and `reActivate()` (the `IBaseBinding` shape; the type is exported from `@motifx/core` and the object is matched
 by shape). It joins the same registry, so `setState()` / `reState()` call its `reActivate()`, `remove(binding)`
 and `clear()` call its `deactivate()`, and so does disposing the component. Without an optional `pause()`
 method, the pause before a dispose calls `deactivate()` too, so it can run twice and must be safe to repeat.

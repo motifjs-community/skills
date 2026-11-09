@@ -76,6 +76,7 @@ this.motif.on('x:built', (sender, e) => …); // lifecycle events via the x: pre
 this.motif.on('custom-thing', handler, false); // 3rd arg false = internal event only (no addEventListener)
 this.motif.trigger('custom-thing', { data: 1 }); // fire internal/custom event
 this.motif.off('click', handler);
+this.motif.isEventFrom(e);                   // true when the DOM event started on this component's element or inside it; a fragment component answers for its content elements; still right after the event has finished; false for a motif.trigger payload
 this.motif.addHandler('click', handler);     // same as motif.on(event, handler)
 this.motif.toggle();                          // hide when visible, show otherwise
 ```

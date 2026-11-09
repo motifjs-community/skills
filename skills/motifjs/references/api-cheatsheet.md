@@ -80,8 +80,10 @@ isBuilt, isInitialized (false in onInitializing, true from onInitialized on), is
 
 // component.motif (ComponentMotif): framework operations; a subclass may define its own show/on/clear/options
 motif.on(event, cb, domEvent = true): Promise<this>; motif.off(event, cb): Promise<this>; motif.trigger(event, args): Promise<this>; motif.addHandler(event, handler)
+motif.isEventFrom(e): boolean                          // the DOM event started on this component's element or inside it (content elements for a fragment component)
 motif.show(): Promise; motif.hide(): Promise; motif.toggle()
 motif.clear(): Promise; motif.register(d: IDisposable); motif.setDisposable(fn); motif.stopAnimations(): Promise<void>
+attr.add(bag); attr.remove(key); attr.has(key); attr.get(key); attr.hold(bag): IDisposable   // hold: values kept over the component's own; dispose() returns each key to the own current value
 motif.options                                          // transition, hideStrategy, disableDisposal, chunk
 ```
 
