@@ -144,7 +144,7 @@ getTree(path = [], depth = Infinity)  // { path, type, tag, built, visible, wait
 coreVersion                           // version of @motifx/core, next to version (the contract version, 2)
 getElement(path) / pathOfElement(node) // in any document of the app; null for [] and for a node under no root
 getDocuments()                        // the page document first, then the connected ones (app.windows windows, connectDocument); documents:changed says when to reread
-inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes, services, effects, extensions, window (window roots only: { kind, title, open, components })
+inspect(path)                         // props (getters not called), fields (own fields, framework internals left out), functionProps (function component root), bindings, events, hooks, classes, attributes ({ name, value, reactive }; a key held with attr.hold also has held: true and heldValue, the value the element shows, while value stays the component's own), services, effects, extensions, window (window roots only: { kind, title, open, components })
 readValue(path, 'props' | 'functionProps' | 'fields', keys) // one level of a nested value: { value, entries: [{ key, value, getter? }], total }
                                       // a signal or computed previews as { kind: 'signal', type, value, stale? }; paths continue into its value
 readStore(id, keys)                   // same, for a store from getStores()
