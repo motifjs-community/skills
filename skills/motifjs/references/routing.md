@@ -190,7 +190,8 @@ restart); `app.router.restoreScrollPositions(positions)` adds saved positions ba
 callable before `run()`); `app.router.scrollPositions()` returns the current ones, the shown page's
 included, as `{ '/notes': 1200 }`. With `scrollMemory` off: `{}`, no-op, never called.
 A hash in the URL wins over the stored position; a path seen for the first time
-starts at the top; a per-navigation `scroll` option (`app.router.navigate('/x', { scroll: 'top' })`)
+starts at the top (scrolled there only when the page is not already there: a document just loaded, or a
+page left at its top and not scrolled since, is not scrolled); a per-navigation `scroll` option (`app.router.navigate('/x', { scroll: 'top' })`)
 overrides the memory (it scrolls the configured `container`, else the window; the page still records its position). Restoring, the top of a new page, an anchor reached from another page and
 back/forward scroll instantly even with CSS `scroll-behavior: smooth`; only an anchor link within the
 same page (router link, or a plain `<a href="#id">` in `history` mode) follows the CSS `scroll-behavior`.
